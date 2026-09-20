@@ -40,15 +40,37 @@ h1{font-size:clamp(1.7rem,3.4vw,2.6rem);font-weight:900;letter-spacing:-.01em;li
 .cur{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-top:10px}
 .cur b{font-size:1.05rem}.cur span{color:var(--mute);font-size:.85rem}
 .desc{color:var(--mute);font-size:.88rem;margin-top:4px}
-label.f{display:block;font-size:.85rem;font-weight:600;margin-top:10px}
-label.f input,label.f select,label.f textarea{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--page);font-weight:400}
-label.f textarea{min-height:84px;resize:vertical}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.use{margin-top:9px;padding:9px 11px;border-radius:8px;background:var(--page);border:1px solid var(--line);font-size:.86rem;line-height:1.6}
+.use b{font-weight:800}
+.hint{color:var(--mute);font-size:.86rem;margin:-4px 0 10px}
+.fs{position:fixed;inset:0;z-index:50;background:#0A0C10;display:flex;flex-direction:column;gap:12px;padding:14px 18px 18px}
+.fs[hidden]{display:none}
+.fsbar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;color:#fff}
+.fsbar b{font-size:1.05rem}
+.fsbar .en2{color:rgba(255,255,255,.6);font-size:.85rem}
+.fsbar .sp{flex:1 1 auto}
+.fs .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.45)}
+.fsk{display:flex;flex-wrap:wrap;gap:6px}
+.fsk button{padding:5px 13px;border:1px solid rgba(255,255,255,.4);border-radius:999px;background:transparent;color:#fff;cursor:pointer;font-size:.85rem}
+.fsk button[aria-pressed=true]{background:#fff;color:#111;border-color:#fff}
+.fsstage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.fsstage>div{width:min(100%,calc((100vh - 170px) * 16 / 9))}
+.fsstage .slide{border-radius:10px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
+.fstip{text-align:center;color:rgba(255,255,255,.5);font-size:.8rem;margin:0}
+@media (max-width:700px){
+ .fs{padding:10px 12px 12px;gap:8px}
+ .fsbar{gap:6px 8px}
+ .fsbar b{font-size:.95rem}
+ .fsbar .en2{display:none}
+ .fsbar .sp{display:none}
+ .fsk{flex:1 1 100%;order:3;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+ .fsk button{flex:0 0 auto;padding:4px 11px;font-size:.8rem}
+ .fs .btn{padding:6px 12px;font-size:.85rem}
+ .fstip{font-size:.72rem}
+}
 .pal{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
 .pal input[type=color]{width:38px;height:32px;padding:0;border:1px solid var(--line);border-radius:6px;background:none;cursor:pointer}
 .lnk{border:0;background:none;color:var(--focus);cursor:pointer;font-size:.85rem;text-decoration:underline}
-.opts{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:10px;font-size:.88rem}
-.opts label{display:flex;gap:6px;align-items:center}
 #out{width:100%;min-height:300px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--page);font-family:var(--mono);font-size:.82rem;line-height:1.65;resize:vertical;white-space:pre-wrap}
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .btn{padding:9px 16px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--page);font-weight:700;cursor:pointer}
@@ -128,7 +150,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--mute);font
 </head>
 <body>
 <div class="top">
-  <div><h1>PPT 风格提示词生成器</h1><p>挑一个视觉风格,填上主题,右边就是一段可以直接丢给 AI 的提示词。缩略图只是示意,真正决定效果的是提示词里的文字描述。</p></div>
+  <div><h1>PPT 风格提示词生成器</h1><p>挑一个视觉风格,直接给你一段现成的提示词。复制走,把你要做的内容接在后面,丢给 AI 就行。点「全屏看」能把范例页放大。缩略图只是示意,真正决定效果的是提示词里的文字描述。</p></div>
 </div>
 <div class="layout">
   <main>
@@ -139,23 +161,24 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--mute);font
   <aside class="side">
     <div class="box"><div id="preview"></div><div class="kinds" id="kinds" role="group" aria-label="范例页"></div>
       <div class="cur"><b id="curZh"></b><span id="curEn"></span></div><p class="desc" id="curDesc"></p>
+      <p class="use" id="curUse"></p>
       <div class="pal" id="pal" aria-label="调整配色"></div>
-      <div class="acts" style="margin-top:8px"><button class="btn ghost" id="replay" style="padding:5px 12px;font-size:.85rem">重播动效</button><span class="desc" id="moName" style="margin:0;align-self:center"></span></div>
+      <div class="acts" style="margin-top:8px"><button class="btn ghost" id="full" style="padding:5px 12px;font-size:.85rem">⤢ 全屏看</button><button class="btn ghost" id="replay" style="padding:5px 12px;font-size:.85rem">重播动效</button><span class="desc" id="moName" style="margin:0;align-self:center"></span></div>
     </div>
-    <div class="box"><h2>你的内容</h2>
-      <label class="f">主题<input id="fTopic" type="text" placeholder="例如:2026 年 AI 基础设施投资框架"></label>
-      <div class="two"><label class="f">页数<input id="fPages" type="number" min="1" max="80" value="12"></label><label class="f">比例<select id="fRatio"><option>16:9</option><option>4:3</option><option>9:16 竖版</option><option>1:1</option></select></label></div>
-      <div class="two"><label class="f">受众<input id="fAud" type="text" placeholder="例如:投资人、同事、学生"></label><label class="f">用在哪<select id="fTool"><option value="general">通用对话 AI</option><option value="html">生成 HTML 幻灯片</option><option value="ppt">Gamma / Canva / WPS AI</option><option value="image">图像模型逐页出图</option></select></label></div>
-      <label class="f">动效强度<select id="fMotion"><option value="subtle">克制:转场加一组入场</option><option value="rich">丰富:入场、强调、图表动画都写</option><option value="none">不要动效</option></select></label>
-      <label class="f">大纲或素材(可留空)<textarea id="fOutline" placeholder="把要点、数据、章节贴在这里"></textarea></label>
-      <div class="opts"><label><input type="checkbox" id="oComp" checked>写出版式组件</label><label><input type="checkbox" id="oRule" checked>加内容原则</label><label><input type="checkbox" id="oKw" checked>附英文关键词</label><label><input type="checkbox" id="oAvoid" checked>写明禁止项</label></div>
-    </div>
-    <div class="box"><h2>提示词</h2><textarea id="out" aria-label="生成的提示词" spellcheck="false"></textarea>
+    <div class="box"><h2>提示词</h2><p class="hint">复制下面这段,粘到 AI 对话里,再把你要做的主题和素材接在后面就行。</p><textarea id="out" aria-label="生成的提示词" spellcheck="false"></textarea>
       <div class="acts"><button class="btn" id="copy">复制提示词</button><button class="btn ghost" id="dl">下载 .txt</button><span id="toast" role="status"></span></div>
     </div>
   </aside>
 </div>
-<footer>全部在浏览器本地运行,不联网、不上传。收藏保存在这台设备的浏览器里。想加新风格,在源码的 STYLES 数组里照格式添一条就行。</footer>
+<div class="fs" id="fs" role="dialog" aria-modal="true" aria-label="全屏预览" hidden>
+  <div class="fsbar"><b id="fsZh"></b><span class="en2" id="fsEn"></span><span class="sp"></span>
+    <div class="fsk" id="fsKinds" role="group" aria-label="切换范例页"></div>
+    <button class="btn ghost" id="fsReplay">重播动效</button>
+    <button class="btn ghost" id="fsClose">关闭 ✕</button></div>
+  <div class="fsstage"><div id="fsPrev"></div></div>
+  <p class="fstip">← → 切换范例页 · 空格重播动效 · Esc 退出</p>
+</div>
+<footer>全部在浏览器本地运行,不联网、不上传。收藏保存在这台设备的浏览器里。想加新风格,在源码的 STYLES 数组里照格式添一条,再到 USE 里补一句适用场景就行。</footer>
 
 <script>
 /* 每个风格:c=[背景,文字,主色,辅色,点缀];t=缩略图参数;其余字段进入提示词 */
@@ -292,6 +315,8 @@ paper:{n:"纸片落下",trans:"新的一页像一张纸盖上来,或从侧面滑
 ink:{n:"墨晕显现",trans:"水墨晕染转场:墨色从一点晕开铺满,再化出下一页;或卷轴横向展开。",enter:"文字和图形从模糊、浅淡逐渐凝实,像墨在宣纸上渗开;印章最后「盖」下,带一次轻微缩放。",emph:"不做强调动效,靠留白。",dur:"1.2–1.5 秒,缓入缓出,间隔 300 毫秒,整体要慢。",ppt:"转场用「淡出」或「涟漪」;动画用「淡化」加「缩放」,时长 1.2 秒以上。"},
 data:{n:"数据生长",trans:"快速淡化或不加转场,别打断阅读。",enter:"数字从 0 滚动计数到目标值;柱状图从基线生长,折线沿路径绘制,饼图顺时针扫出;文字只做 0.3 秒的轻微上移淡入。",emph:"需要讲解的那一根柱子或那一行保持原色,其余降到 30% 不透明度。",dur:"图表 0.6–0.8 秒,文字 0.3 秒,间隔 60 毫秒;同一页所有图表同时开始。",ppt:"转场用「淡出」0.3 秒;图表动画用「擦除(自底部)」并选「按系列」或「按类别」。"},
 retro:{n:"复古转场",trans:"圆形光圈展开(iris)、星形擦除、棋盘格或百叶窗,选一种全套统一。",enter:"标题弹跳或旋转入场一次,其余内容随转场一起出现,不再单独做动画。",emph:"星芒或徽章原地旋转一圈。",dur:"转场 0.8–1 秒,元素 0.5 秒。",ppt:"转场用「形状(圆形)」「棋盘」「百叶窗」;动画用「弹跳」「旋转」。"}};
+var USE={neobrutal:"独立产品发布、开发者分享、Hackathon 路演、社媒图文",riso:"校园与文化活动、独立刊物、展览海报、设计提案",memphis:"品牌年轻化提案、创意工作坊、潮流快消、活动开场",collage:"创意 campaign 提案、音乐与艺术活动、亚文化品牌",street:"潮牌球鞋滑板、电竞赛事、音乐节、Z 世代营销",comic:"产品发布、活动宣传、面向学生的科普、销售动员会",swiss:"设计评审、品牌手册、年度报告、大学讲座",bauhaus:"设计与建筑课程、工业设计提案、展览导览",mono:"高管汇报、作品集、投资路演、品牌发布",constructiv:"内部动员大会、战略宣讲、公共议题演讲、展览",japanmin:"茶饮与生活方式品牌、日式餐饮、冥想课程、文化讲座",midcentury:"品牌故事、广告提案、旅游推介、复古主题活动",artdeco:"年会与颁奖礼、高端晚宴、奢侈品发布、邀请函",psy70:"音乐演出、潮流饮品、复古派对、创意 campaign",citypop:"音乐企划、旅行推介、咖啡与夜生活品牌、怀旧营销",vapor:"互联网亚文化、Web3 项目、潮流电商、meme 向内容",pixel:"游戏发布、电竞活动、开发者聚会、少儿编程课",y2k:"美妆潮流、Z 世代营销、怀旧主题、短视频与直播",newspaper:"重大事件复盘、调查报告、危机沟通、媒体发布会",fieldguide:"科普与自然讲座、博物馆导览、产品图鉴、教育课程",blueprint:"技术方案评审、硬件产品介绍、施工与制造汇报、架构设计",cyber:"游戏与元宇宙、电竞、科幻主题活动、潮流科技发布",terminal:"开发者大会、安全攻防复盘、技术内训、开源项目介绍",hud:"自动驾驶与无人机、航天军工、监控系统演示、硬科技路演",glass:"SaaS 产品演示、App 界面提案、设计系统介绍、发布会",aurora:"AI 产品发布、融资路演、前沿技术介绍、品牌升级",dashboard:"经营月报、量化投研、运维监控汇报、数据产品演示",cleantech:"B2B 销售提案、SaaS 白皮书、客户方案、招投标",keynote:"新品发布会、主题演讲、行业大会 keynote、产品故事",luxury:"珠宝腕表与奢侈品、高端地产、私人银行、VIP 邀请",darkacademia:"人文讲座、读书会、历史与哲学课程、文学品牌",cinema:"品牌片提案、影视项目路演、年度回顾、故事型演讲",filmphoto:"旅行分享、婚礼与纪念、摄影作品集、品牌回忆杀",sketchnote:"工作坊、培训、需求梳理、敏捷复盘",chalk:"课堂教学、餐饮菜单、知识科普、亲子活动",kraft:"旅行手账、手作品牌、市集招商、社群分享",sticky:"敏捷站会、设计冲刺、项目复盘、团队共创",watercolor:"婚礼策划、公益项目、女性向品牌、疗愈与心理",consulting:"战略汇报、尽调报告、董事会材料、投标方案",editorial:"品牌特稿、行业洞察、内容营销、时尚与消费汇报",academic:"论文答辩、学术会议、科研汇报、课题结题",flatcorp:"公司介绍、招聘宣讲、业务流程说明、员工培训",isometric:"技术架构、系统全景、供应链与园区介绍、产品原理",clay:"儿童教育产品、消费类 App、活动运营、轻松风内训",neumorph:"智能硬件、App 设计提案、UI 作品集",morandi:"家居家装、生活方式品牌、ESG 与可持续、女性向内容",kids:"幼教课程、亲子活动、儿童产品、公益科普",kawaii:"美妆文创零食、社团招新、粉丝运营、校园活动",inkwash:"文化讲座、茶酒品牌、中医康养、书画展览",guochao:"春节与节庆营销、国货品牌、文创联名、公司年会",ukiyoe:"日式餐饮、和风文创、动漫游戏企划、文化展览",dunhuang:"文旅推介、博物馆展陈、文化遗产项目、高端文创"};
+function uses(s){return USE[s.id]||""}
 var MOMAP={neobrutal:"snap",memphis:"snap",street:"snap",comic:"snap",pixel:"snap",constructiv:"snap",riso:"print",collage:"paper",newspaper:"print",fieldguide:"print",swiss:"swiss",bauhaus:"swiss",mono:"fade",japanmin:"fade",midcentury:"retro",artdeco:"fade",psy70:"retro",citypop:"retro",vapor:"glow",y2k:"float",blueprint:"draw",cyber:"glow",terminal:"type",hud:"glow",glass:"float",aurora:"float",dashboard:"data",cleantech:"data",keynote:"fade",luxury:"fade",darkacademia:"fade",cinema:"fade",filmphoto:"paper",sketchnote:"draw",chalk:"draw",kraft:"paper",sticky:"paper",watercolor:"ink",consulting:"data",editorial:"swiss",academic:"data",flatcorp:"float",isometric:"float",clay:"float",neumorph:"float",morandi:"fade",kids:"paper",kawaii:"float",inkwash:"ink",guochao:"snap",ukiyoe:"ink",dunhuang:"ink"};
 function mo(s){return MOMAP[s.id]||"fade"}
 
@@ -350,48 +375,82 @@ function saveFav(){try{localStorage.setItem("ppt_fav",JSON.stringify(fav))}catch
 
 function renderChips(){$("chips").innerHTML=CATS.map(function(c){var n=c==="全部"?STYLES.length:c==="收藏"?Object.keys(fav).length:STYLES.filter(function(s){return s.cat===c}).length;return'<button class="chip" aria-pressed="'+(c===cat)+'" data-c="'+c+'">'+c+" "+n+"</button>"}).join("");
  [].forEach.call($("chips").children,function(b){b.onclick=function(){cat=b.dataset.c;renderChips();renderGal()}})}
-function renderGal(){var q=$("q").value.trim().toLowerCase(),list=STYLES.filter(function(s){if(cat==="收藏"&&!fav[s.id])return false;if(cat!=="全部"&&cat!=="收藏"&&s.cat!==cat)return false;if(!q)return true;return(s.zh+s.en+s.cat+s.kw+s.mood+s.look).toLowerCase().indexOf(q)>-1});
+function renderGal(){var q=$("q").value.trim().toLowerCase(),list=STYLES.filter(function(s){if(cat==="收藏"&&!fav[s.id])return false;if(cat!=="全部"&&cat!=="收藏"&&s.cat!==cat)return false;if(!q)return true;return(s.zh+s.en+s.cat+s.kw+s.mood+s.look+uses(s)).toLowerCase().indexOf(q)>-1});
  $("gal").innerHTML=list.length?list.map(function(s){return'<div style="position:relative"><button class="sc" aria-pressed="'+(s.id===cur.id)+'" data-id="'+s.id+'">'+slideHTML(s,s.c,s.zh,"")+'<span class="nm">'+s.zh+'</span><span class="en">'+s.en+'</span></button><button class="star" aria-pressed="'+!!fav[s.id]+'" aria-label="收藏 '+s.zh+'" data-f="'+s.id+'">'+(fav[s.id]?"★":"☆")+"</button></div>"}).join(""):'<p class="empty">'+(cat==="收藏"?"还没有收藏。点风格卡片右下角的星星。":"没有匹配的风格,换个词试试。")+"</p>";
  [].forEach.call($("gal").querySelectorAll(".sc"),function(b){b.onclick=function(){pick(b.dataset.id)}});
  [].forEach.call($("gal").querySelectorAll(".star"),function(b){b.onclick=function(){var id=b.dataset.f;if(fav[id])delete fav[id];else fav[id]=1;saveFav();renderChips();renderGal()}})}
 function pick(id){cur=STYLES.filter(function(s){return s.id===id})[0]||STYLES[0];pal=cur.c.slice();try{history.replaceState(null,"","#"+cur.id)}catch(e){}renderGal();renderSide()}
-function drawPrev(play){var topic=$("fTopic").value.trim()||cur.zh;$("preview").innerHTML=slideHTML(cur,pal,topic,cur.mood,kind,play);
+function drawPrev(play){var topic=cur.zh;$("preview").innerHTML=slideHTML(cur,pal,topic,cur.mood,kind,play);
  $("kinds").innerHTML=KINDS.map(function(k){return'<div><button aria-pressed="'+(k[0]===kind)+'" data-k="'+k[0]+'" aria-label="范例:'+k[1]+'">'+slideHTML(cur,pal,topic,'',k[0])+'</button><span class="lb2">'+k[1]+'</span></div>'}).join('');
  [].forEach.call($("kinds").querySelectorAll('button'),function(b){b.onclick=function(){kind=b.dataset.k;drawPrev(true)}});$("moName").textContent='动效:'+MOTION[mo(cur)].n}
 function renderSide(){drawPrev(true);$("curZh").textContent=cur.zh;$("curEn").textContent=cur.en+" · "+cur.cat;$("curDesc").textContent=cur.mood;
+ $("curUse").innerHTML="<b>适合场景</b> "+uses(cur);if(!$("fs").hidden)drawFull(true);
  $("pal").innerHTML=pal.map(function(h,i){return'<input type="color" value="'+h+'" data-i="'+i+'" aria-label="'+["背景色","文字色","主色","辅色","点缀色"][i]+'">'}).join("")+'<button class="lnk" id="palReset">恢复原配色</button>';
  [].forEach.call($("pal").querySelectorAll("input"),function(inp){inp.oninput=function(){pal[+inp.dataset.i]=inp.value.toUpperCase();drawPrev(false);build()}});
  $("palReset").onclick=function(){pal=cur.c.slice();renderSide()};build()}
 
+/* ---------- 全屏预览 ---------- */
+function drawFull(play){$("fsPrev").innerHTML=slideHTML(cur,pal,cur.zh,cur.mood,kind,play);
+ $("fsZh").textContent=cur.zh;$("fsEn").textContent=cur.en+" · "+cur.cat+" · 动效:"+MOTION[mo(cur)].n;
+ $("fsKinds").innerHTML=KINDS.map(function(k){return'<button aria-pressed="'+(k[0]===kind)+'" data-k="'+k[0]+'">'+k[1]+'</button>'}).join('');
+ [].forEach.call($("fsKinds").children,function(b){b.onclick=function(){kind=b.dataset.k;drawFull(true);drawPrev(false)}})}
+function openFull(){$("fs").hidden=false;document.body.style.overflow="hidden";drawFull(true);$("fsClose").focus()}
+function closeFull(){$("fs").hidden=true;document.body.style.overflow="";$("full").focus()}
+function stepKind(d){var i=0;KINDS.forEach(function(k,n){if(k[0]===kind)i=n});kind=KINDS[(i+d+KINDS.length)%KINDS.length][0];drawFull(true);drawPrev(false)}
+$("full").onclick=openFull;$("fsClose").onclick=closeFull;$("fsReplay").onclick=function(){drawFull(true)};
+$("fs").onclick=function(e){if(e.target===$("fs")||e.target.className==="fsstage")closeFull()};
+document.addEventListener("keydown",function(e){if($("fs").hidden)return;
+ if(e.key==="Escape")closeFull();
+ else if(e.key==="ArrowRight")stepKind(1);
+ else if(e.key==="ArrowLeft")stepKind(-1);
+ else if(e.key===" "){e.preventDefault();drawFull(true)}else return;
+ e.stopPropagation()});
+
 /* ---------- prompt ---------- */
-function build(){var s=cur,topic=$("fTopic").value.trim()||"【你的主题】",pages=$("fPages").value||12,ratio=$("fRatio").value,aud=$("fAud").value.trim(),outline=$("fOutline").value.trim(),tool=$("fTool").value,L=[];
+function build(){var s=cur,L=[],M=MOTION[mo(s)];
  var names=["背景","文字","主色","辅色","点缀"],palTxt=pal.map(function(h,i){return names[i]+" "+h}).join("、"),changed=pal.join()!==s.c.join();
- if(tool==="image"){L.push("我要用图像模型逐页生成一套演示文稿的画面,主题是「"+topic+"」,共 "+pages+" 页,比例 "+ratio+(aud?",受众是"+aud:"")+"。");L.push("请先根据下面的风格规范,为每一页分别写一条独立的出图提示词(中文描述加一行英文关键词),每条都要重复完整的风格描述,保证各页风格一致;页面上的文字内容尽量少,并明确写出要出现的文字。")}
- else L.push("请为我制作一套 "+ratio+" 的演示文稿,主题是「"+topic+"」,共 "+pages+" 页"+(aud?",受众是"+aud:"")+"。");
- L.push(outline?"内容要点如下:\n"+outline:"内容要点:【在这里粘贴大纲或素材;留空则请你先拟一份大纲给我确认】");
- L.push("");L.push("【整体视觉风格:"+s.zh+" / "+s.en+"】");L.push("- "+s.look);L.push("- 配色"+(changed?"(已自定义)":"")+"只用这一组:"+palTxt+"。大面积用背景色与主色,点缀色只用于强调。");L.push("- 气质:"+s.mood);
- if($("oComp").checked){L.push("");L.push("【版式组件】");s.comp.split(";").forEach(function(x,i){L.push((i+1)+". "+x.replace(/。$/,"")+"。")})}
- L.push("");L.push("【字体】");L.push("- "+s.type);L.push("- 字号层级要拉开:标题、数字明显大于说明文字;全套只用一到两个字体家族。");
- L.push("");L.push("【页面类型】全套至少包含这几种版式,同类页面版式保持一致:");L.push("1. 封面:主题大标题、一行副标题、署名与日期,是全套视觉最强的一页。");L.push("2. 章节页:大号章节编号加章节标题,可以换用主色做整页背景。");L.push("3. 数据页:两到三个大数字卡,每个数字配一行说明。");L.push("4. 图表页:标题直接写结论,一张图表只讲一个对比,强调色只给要讲的那一项。");L.push("5. 流程或结构页:三到五个节点加连接线,节点内文字不超过八个字。");L.push("6. 引语或金句页:一句话居中或大字左对齐,留白最多。");L.push("7. 结尾页:一句总结加下一步行动,不要只写「谢谢」。");
- var mv=$("fMotion").value,M=MOTION[mo(s)];
- if(tool!=="image"){L.push("");if(mv==="none"){L.push("【动效与转场】");L.push("- 不要任何动画和转场,全部硬切,保证导出 PDF 后与放映效果一致。")}
-  else{L.push("【动效与转场:"+M.n+(mv==="rich"?",丰富":",克制")+"】");L.push("- 转场:"+M.trans+"全套只用这一种转场。");L.push("- 元素入场:"+M.enter);if(mv==="rich")L.push("- 强调:"+M.emph);L.push("- 节奏:"+M.dur);
-   L.push(mv==="rich"?"- 每页一个编排好的入场序列,顺序跟阅读顺序一致;图表要有生长或绘制动画;讲解中的强调动效由点击触发。":"- 每页只做一组入场,不加循环动画、不加强调动画;图表可以有一次生长动画。");
-   L.push("- 同类元素永远用同一种动效;动效服务于讲述顺序,不为了热闹。");
-   if(tool==="html")L.push("- 用 CSS 动画实现,翻到该页时触发;用 @media (prefers-reduced-motion: reduce) 关闭全部动画;关闭后页面必须完整可读。");
-   else L.push("- 在 PowerPoint / Keynote 里对应:"+M.ppt)}}
- if($("oAvoid").checked){L.push("");L.push("【不要出现】");L.push("- "+s.avoid)}
- if($("oRule").checked){L.push("");L.push("【内容原则】");L.push("- 每页只讲一个观点:一个标题、一个主视觉(图、图表或大数字),文字尽量少。");L.push("- 多用具体数字、真实案例和示意图,少用要点列表和图标堆砌。");L.push("- 封面、章节页、内容页、结尾页的版式要有变化,但配色、字体、组件保持一致。")}
- if($("oKw").checked){L.push("");L.push("【英文风格关键词】");L.push(s.kw)}
+ L.push("请按下面这套视觉风格,帮我做一套 16:9 的演示文稿。页数按内容定,一般 10–15 页。");
+ L.push("");
+ L.push("【我要讲的内容】");
+ L.push("(把主题、大纲或素材贴在这一行下面。如果这里是空的,先拟一份大纲给我确认,再开始出稿。)");
+ L.push("");
+ L.push("【整体视觉风格:"+s.zh+" / "+s.en+"】");
+ L.push("- "+s.look);
+ L.push("- 配色"+(changed?"(已自定义)":"")+"只用这一组:"+palTxt+"。大面积用背景色与主色,点缀色只用于强调。");
+ L.push("- 气质:"+s.mood);
+ L.push("");L.push("【版式组件】");
+ s.comp.split(";").forEach(function(x,i){L.push((i+1)+". "+x.replace(/。$/,"")+"。")});
+ L.push("");L.push("【字体】");L.push("- "+s.type);
+ L.push("- 字号层级要拉开:标题、数字明显大于说明文字;全套只用一到两个字体家族。");
+ L.push("");L.push("【页面类型】全套至少包含这几种版式,同类页面版式保持一致:");
+ L.push("1. 封面:主题大标题、一行副标题、署名与日期,是全套视觉最强的一页。");
+ L.push("2. 章节页:大号章节编号加章节标题,可以换用主色做整页背景。");
+ L.push("3. 数据页:两到三个大数字卡,每个数字配一行说明。");
+ L.push("4. 图表页:标题直接写结论,一张图表只讲一个对比,强调色只给要讲的那一项。");
+ L.push("5. 流程或结构页:三到五个节点加连接线,节点内文字不超过八个字。");
+ L.push("6. 引语或金句页:一句话居中或大字左对齐,留白最多。");
+ L.push("7. 结尾页:一句总结加下一步行动,不要只写「谢谢」。");
+ L.push("");L.push("【动效与转场:"+M.n+"】");
+ L.push("- 转场:"+M.trans+"全套只用这一种转场。");
+ L.push("- 元素入场:"+M.enter);
+ L.push("- 强调:"+M.emph);
+ L.push("- 节奏:"+M.dur);
+ L.push("- 每页只做一组入场,不加循环动画;图表可以有一次生长动画。同类元素永远用同一种动效,动效服务于讲述顺序,不为了热闹。");
+ L.push("- 在 PowerPoint / Keynote 里对应:"+M.ppt);
+ L.push("");L.push("【不要出现】");L.push("- "+s.avoid);
+ L.push("");L.push("【内容原则】");
+ L.push("- 每页只讲一个观点:一个标题、一个主视觉(图、图表或大数字),文字尽量少。");
+ L.push("- 多用具体数字、真实案例和示意图,少用要点列表和图标堆砌。");
+ L.push("- 封面、章节页、内容页、结尾页的版式要有变化,但配色、字体、组件保持一致。");
+ L.push("");L.push("【英文风格关键词】");L.push(s.kw);
  L.push("");L.push("【输出要求】");
- if(tool==="html"){L.push("- 输出一个自包含的 HTML 单文件幻灯片:画布固定 1600×900,按窗口等比缩放居中;方向键、空格和点击翻页,触屏支持左右滑动;底部显示页码。");L.push("- CSS 与 JS 全部内联;字体给出系统字体回退;图形用内联 SVG 或 CSS 绘制,不引用外部图片。");L.push("- 配色写成 CSS 变量,组件写成可复用的 class。")}
- else if(tool==="ppt"){L.push("- 先把上面的风格设成整套主题(主题色、字体、背景),再逐页生成。");L.push("- 逐页给出:页标题、版式类型、正文要点(每页不超过 40 字)、配图或图表建议。")}
- else if(tool==="image"){L.push("- 每页一条提示词,格式:第 N 页|画面描述(含要出现的文字)|英文关键词,结尾加 --ar "+ratio.replace(/[^0-9:]/g,"")+"。");L.push("- 所有页面共用同一段风格描述,只替换画面内容。")}
- else{L.push("- 直接生成完整的演示文稿;如果你能生成文件,就输出文件,否则逐页给出版式与内容。");L.push("- 动手之前先用三五句话复述你理解的风格,我确认后再继续。")}
+ L.push("- 动手之前先用三五句话复述你理解的风格,我确认后再继续。");
+ L.push("- 能直接生成文件就输出文件,否则逐页给出版式与内容。");
+ L.push("- 如果你要输出 HTML 幻灯片:做成自包含单文件,画布 1600×900 等比缩放居中,方向键与点击翻页,CSS 与 JS 内联,图形用内联 SVG 或 CSS 画,不引用外部资源;动画用 CSS 实现,并用 @media (prefers-reduced-motion: reduce) 全部关掉。");
+ L.push("- 如果你是图像模型:逐页各写一条独立出图提示词,每条都重复完整的风格描述保证各页一致,页面文字尽量少并明确写出,结尾加 --ar 16:9。");
  $("out").value=L.join("\n")}
 
 /* ---------- events ---------- */
-["fTopic","fPages","fRatio","fAud","fOutline","fTool","fMotion","oComp","oRule","oKw","oAvoid"].forEach(function(id){$(id).addEventListener("input",function(){if(id==="fTopic")drawPrev(false);build()})});
 $("q").addEventListener("input",renderGal);
 $("replay").onclick=function(){drawPrev(true)};
 $("rand").onclick=function(){var s=STYLES[Math.floor(Math.random()*STYLES.length)];cat="全部";$("q").value="";renderChips();pick(s.id)};
