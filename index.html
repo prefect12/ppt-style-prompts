@@ -20,13 +20,13 @@ button,input,select,textarea{font:inherit;color:inherit}
 .top{max-width:1500px;margin:0 auto;padding:28px 24px 8px;display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;justify-content:space-between}
 h1{font-size:clamp(1.7rem,3.4vw,2.6rem);font-weight:900;letter-spacing:-.01em;line-height:1.15}
 .top p{color:var(--mute);max-width:46em}
-.layout{max-width:1500px;margin:0 auto;padding:16px 24px 60px;display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,520px);gap:28px;align-items:start}
+.layout{max-width:1500px;margin:0 auto;padding:16px 24px 60px;display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:28px;align-items:start}
 .tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
 .tools input[type=search]{flex:1;min-width:180px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
 .chip{padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:transparent;cursor:pointer;font-size:.88rem}
 .chip[aria-pressed=true]{background:var(--ink);color:var(--page);border-color:var(--ink)}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 .sc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:left;position:relative;display:block;width:100%}
 .sc[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
 .sc .nm{display:block;font-weight:700;font-size:.92rem;margin-top:7px;line-height:1.3;padding-right:24px}
@@ -123,7 +123,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--mute);font
 .kinds button[aria-pressed=true]{border-color:var(--ink)}
 .kinds span.lb2{display:block;font-size:.7rem;color:var(--mute);text-align:center;margin-top:2px}
 /* motion preview: keyframes define only the start state so resting transforms survive */
-@keyframes mPop{from{transform:scale(.4);opacity:0}}@keyframes mSlide{from{transform:translateX(-1.4em);opacity:0}}@keyframes mFade{from{opacity:0}}
+@keyframes mPop{from{transform:scale(.4);opacity:0}}@keyframes mSnapS{from{transform:scale(.46)}}@keyframes mSnapO{from{opacity:0}}@keyframes mSlide{from{transform:translateX(-1.4em);opacity:0}}@keyframes mFade{from{opacity:0}}
 @keyframes mGlitch{0%{opacity:0;transform:translateX(-.6em)}20%{opacity:1;transform:translateX(.4em)}40%{opacity:.2;transform:translateX(-.2em)}60%{opacity:1}80%{opacity:.5;transform:translateX(.15em)}}
 @keyframes mRise{from{transform:translateY(1em) scale(.95);opacity:0}}@keyframes mWipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 -10% 0 0)}}
 @keyframes mDrop{from{transform:translateY(-1.6em) rotate(-8deg);opacity:0}}@keyframes mInk{from{filter:blur(.7em);opacity:0}}
@@ -131,7 +131,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--mute);font
 .play :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-fill-mode:backwards}
 .play :is(.sub,.by,.cd:nth-child(1),.bar:nth-child(1)){animation-delay:calc(var(--stg)*1)}.play :is(.cd:nth-child(3),.bar:nth-child(2),.ln){animation-delay:calc(var(--stg)*2)}
 .play :is(.cd:nth-child(5),.cd:nth-child(2):not(.flow *),.bar:nth-child(3)){animation-delay:calc(var(--stg)*3)}.play :is(.cd:nth-child(3):not(.flow *),.bar:nth-child(4)){animation-delay:calc(var(--stg)*4)}.play .bar:nth-child(5){animation-delay:calc(var(--stg)*5)}
-.play.m-snap :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mPop;animation-duration:.24s;animation-timing-function:steps(4)}.m-snap{--stg:.09s}
+.play.m-snap :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mSnapS,mSnapO;animation-duration:.2s;animation-timing-function:steps(4,jump-start),steps(1,jump-start)}.m-snap{--stg:.08s}
 .play.m-print :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mFade;animation-duration:.08s}.m-print{--stg:.12s}
 .play.m-swiss :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln){animation-name:mSlide;animation-duration:.4s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}.m-swiss{--stg:.07s}
 .play.m-fade :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mFade;animation-duration:1.1s}.m-fade{--stg:.3s}
@@ -145,7 +145,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--mute);font
 .play.m-retro .in{animation:mIris .9s ease-out backwards}
 .play:is(.m-float,.m-draw,.m-paper,.m-data,.m-swiss) .bar{animation-name:mGrow;animation-duration:.7s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
 @media (prefers-reduced-motion:reduce){.play *{animation:none!important}}
-@media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:static;max-height:none;order:-1}.gallery{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+@media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:static;max-height:none}.gallery{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
 </style>
 </head>
 <body>
@@ -153,11 +153,6 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--mute);font
   <div><h1>PPT 风格提示词生成器</h1><p>挑一个视觉风格,直接给你一段现成的提示词。复制走,把你要做的内容接在后面,丢给 AI 就行。点「全屏看」能把范例页放大。缩略图只是示意,真正决定效果的是提示词里的文字描述。</p></div>
 </div>
 <div class="layout">
-  <main>
-    <div class="tools"><input type="search" id="q" placeholder="搜索风格:蓝图、复古、dark、杂志…" aria-label="搜索风格"><button class="btn ghost" id="rand">随机来一个</button></div>
-    <div class="chips" id="chips" role="group" aria-label="按类别筛选"></div>
-    <div class="gallery" id="gal"></div>
-  </main>
   <aside class="side">
     <div class="box"><div id="preview"></div><div class="kinds" id="kinds" role="group" aria-label="范例页"></div>
       <div class="cur"><b id="curZh"></b><span id="curEn"></span></div><p class="desc" id="curDesc"></p>
@@ -169,6 +164,11 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--mute);font
       <div class="acts"><button class="btn" id="copy">复制提示词</button><button class="btn ghost" id="dl">下载 .txt</button><span id="toast" role="status"></span></div>
     </div>
   </aside>
+  <main>
+    <div class="tools"><input type="search" id="q" placeholder="搜索风格:蓝图、复古、dark、杂志…" aria-label="搜索风格"><button class="btn ghost" id="rand">随机来一个</button></div>
+    <div class="chips" id="chips" role="group" aria-label="按类别筛选"></div>
+    <div class="gallery" id="gal"></div>
+  </main>
 </div>
 <div class="fs" id="fs" role="dialog" aria-modal="true" aria-label="全屏预览" hidden>
   <div class="fsbar"><b id="fsZh"></b><span class="en2" id="fsEn"></span><span class="sp"></span>
