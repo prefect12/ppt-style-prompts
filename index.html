@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PPT 风格提示词生成器</title>
+<meta name="description" content="挑一个视觉风格,填上主题,生成可以直接丢给 AI 的 PPT 提示词。">
+<style>
+:root{--page:#E9ECEF;--panel:#FFFFFF;--ink:#14171C;--mute:#5E6873;--line:#C9CFD6;--focus:#2F4BFF;--ok:#1E7A4C;
+ --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+ --serif:"Songti SC","Noto Serif SC","Source Han Serif SC","STSong",Georgia,"Times New Roman",serif;
+ --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Mono",Menlo,Consolas,monospace;
+ --round:"Yuanti SC","YouYuan","PingFang SC","Arial Rounded MT Bold","Nunito",sans-serif;
+ --cond:"Impact","Haettenschweiler","Arial Narrow","PingFang SC","Microsoft YaHei",sans-serif}
+@media (prefers-color-scheme:dark){:root{--page:#101317;--panel:#191D23;--ink:#ECEFF3;--mute:#98A2AE;--line:#2C333C;--focus:#8C9DFF;--ok:#6FD6A0}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--page);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.top{max-width:1500px;margin:0 auto;padding:28px 24px 8px;display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;justify-content:space-between}
+h1{font-size:clamp(1.7rem,3.4vw,2.6rem);font-weight:900;letter-spacing:-.01em;line-height:1.15}
+.top p{color:var(--mute);max-width:46em}
+.layout{max-width:1500px;margin:0 auto;padding:16px 24px 60px;display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,520px);gap:28px;align-items:start}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.tools input[type=search]{flex:1;min-width:180px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.chip{padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:transparent;cursor:pointer;font-size:.88rem}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--page);border-color:var(--ink)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.sc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:left;position:relative;display:block;width:100%}
+.sc[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+.sc .nm{display:block;font-weight:700;font-size:.92rem;margin-top:7px;line-height:1.3;padding-right:24px}
+.sc .en{display:block;color:var(--mute);font-size:.78rem}
+.star{position:absolute;right:6px;bottom:8px;border:0;background:transparent;cursor:pointer;font-size:1.1rem;line-height:1;padding:4px;color:var(--mute)}
+.star[aria-pressed=true]{color:#E0A100}
+.empty{color:var(--mute);padding:30px 0}
+.side{position:sticky;top:14px;display:flex;flex-direction:column;gap:16px;max-height:calc(100vh - 28px);overflow-y:auto;padding-right:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.box h2{font-size:1rem;font-weight:800;margin-bottom:10px}
+.cur{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-top:10px}
+.cur b{font-size:1.05rem}.cur span{color:var(--mute);font-size:.85rem}
+.desc{color:var(--mute);font-size:.88rem;margin-top:4px}
+label.f{display:block;font-size:.85rem;font-weight:600;margin-top:10px}
+label.f input,label.f select,label.f textarea{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--page);font-weight:400}
+label.f textarea{min-height:84px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pal{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.pal input[type=color]{width:38px;height:32px;padding:0;border:1px solid var(--line);border-radius:6px;background:none;cursor:pointer}
+.lnk{border:0;background:none;color:var(--focus);cursor:pointer;font-size:.85rem;text-decoration:underline}
+.opts{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:10px;font-size:.88rem}
+.opts label{display:flex;gap:6px;align-items:center}
+#out{width:100%;min-height:300px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--page);font-family:var(--mono);font-size:.82rem;line-height:1.65;resize:vertical;white-space:pre-wrap}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{padding:9px 16px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--page);font-weight:700;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+#toast{color:var(--ok);font-size:.88rem;align-self:center}
+footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--mute);font-size:.85rem}
+
+/* ---------- mini slide renderer ---------- */
+.slide{container-type:inline-size;aspect-ratio:16/9;width:100%;position:relative;overflow:hidden;border-radius:6px;background:var(--bg);color:var(--ink2);display:block}
+.slide .in{position:absolute;inset:0;font-size:3.3cqw;padding:1.5em 1.7em;display:flex;flex-direction:column;gap:.7em;font-family:var(--bf)}
+.slide.center .in{align-items:center;text-align:center}
+.slide.lb .in{padding-top:2.6em;padding-bottom:2.4em}
+.slide .tag{align-self:flex-start;font-size:.62em;font-weight:700;letter-spacing:.06em;padding:.25em .9em;background:var(--tagbg);color:var(--tagfg);border:var(--bw) solid var(--bd);border-radius:var(--tagr);font-family:var(--lf)}
+.slide.center .tag{align-self:center}
+.slide .ttl{font-family:var(--tf);font-weight:var(--tw);font-size:1.75em;line-height:1.12;letter-spacing:var(--ls);text-transform:var(--tt);text-shadow:var(--tsh);max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.slide .sub{font-size:.62em;opacity:.8;max-width:30em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.slide .row{display:flex;gap:.8em;margin-top:auto;width:100%}
+.slide .cd{flex:1;background:var(--cbg);color:var(--cfg);border:var(--bw) solid var(--bd);border-radius:var(--rad);box-shadow:var(--sh);padding:.5em .7em;backdrop-filter:var(--bf2);min-width:0}
+.slide .cd:nth-child(2){background:var(--c2bg);color:var(--c2fg)}
+.slide .cd:nth-child(3){background:var(--c3bg);color:var(--c3fg)}
+.slide.rot .cd:nth-child(1){transform:rotate(-2deg)}.slide.rot .cd:nth-child(2){transform:rotate(1.5deg)}.slide.rot .cd:nth-child(3){transform:rotate(-1deg)}
+.slide .cd b{display:block;font-family:var(--nf);font-size:1.25em;line-height:1.1;font-weight:var(--tw)}
+.slide .cd i{display:block;font-style:normal;font-size:.5em;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slide .deco{position:absolute;pointer-events:none}
+.slide .g{position:absolute;inset:0;pointer-events:none}
+.g.dots{background-image:radial-gradient(var(--gc) 1px,transparent 1.3px);background-size:3.2cqw 3.2cqw}
+.g.lines{background-image:linear-gradient(var(--gc) 1px,transparent 1px),linear-gradient(90deg,var(--gc) 1px,transparent 1px);background-size:5cqw 5cqw}
+.g.scan{background-image:repeating-linear-gradient(0deg,var(--gc) 0 1px,transparent 1px 4px)}
+.g.rule{background-image:repeating-linear-gradient(0deg,transparent 0 4.6cqw,var(--gc) 4.6cqw calc(4.6cqw + 1px))}
+.g.half{background-image:radial-gradient(var(--gc) 1.6px,transparent 1.8px);background-size:2cqw 2cqw;mask-image:linear-gradient(120deg,transparent 45%,#000);-webkit-mask-image:linear-gradient(120deg,transparent 45%,#000)}
+.g.frame{inset:3.5%;border:1px solid var(--gc)}
+.g.frame2{inset:3.5%;border:2px solid var(--gc);outline:1px solid var(--gc);outline-offset:-1.6cqw}
+.g.persp{background-image:linear-gradient(var(--gc) 1px,transparent 1px),linear-gradient(90deg,var(--gc) 1px,transparent 1px);background-size:6cqw 3cqw;top:55%;transform:perspective(40cqw) rotateX(58deg);transform-origin:top}
+.g.sun{background:repeating-conic-gradient(from 0deg at 50% 110%,var(--gc) 0 6deg,transparent 6deg 12deg)}
+.g.grain{opacity:.5;mix-blend-mode:multiply;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .4 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.slide .big{font-size:2.5em;-webkit-line-clamp:3}
+.slide .by{font-size:.55em;opacity:.75;margin-top:auto}
+.slide .secn{font-family:var(--nf);font-weight:var(--tw);font-size:6.2em;line-height:.9;color:var(--a1c);text-shadow:var(--tsh)}
+.slide .bars{display:flex;align-items:flex-end;gap:.6em;flex:1;width:100%;min-height:0;border-bottom:.1em solid var(--ink2);padding:0 .3em}
+.slide .bar{flex:1;border:var(--bw) solid var(--bd);border-bottom:0;border-radius:var(--rad) var(--rad) 0 0;background:var(--c2bg);transform-origin:bottom}
+.slide .bar:nth-child(3n){background:var(--c3bg)}.slide .bar:nth-child(3n+1){background:var(--b1)}
+.slide .flow{display:flex;align-items:center;margin:auto 0;width:100%}
+.slide .flow .cd{text-align:center;padding:.8em .4em}.slide .flow .cd b{font-size:.9em}
+.slide .ln{flex:none;width:1.4em;border-top:.14em solid var(--ink2)}
+.slide .qm{font-family:var(--serif);font-size:5em;line-height:.55;color:var(--a1c);height:.45em}
+.slide .qt{font-family:var(--tf);font-weight:var(--tw);font-size:1.2em;line-height:1.4;max-width:22em}
+#preview .slide{border-radius:8px}
+.kinds{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
+.kinds button{width:100%;border:2px solid transparent;border-radius:6px;padding:0;background:none;cursor:pointer;display:block}
+.kinds button[aria-pressed=true]{border-color:var(--ink)}
+.kinds span.lb2{display:block;font-size:.7rem;color:var(--mute);text-align:center;margin-top:2px}
+/* motion preview: keyframes define only the start state so resting transforms survive */
+@keyframes mPop{from{transform:scale(.4);opacity:0}}@keyframes mSlide{from{transform:translateX(-1.4em);opacity:0}}@keyframes mFade{from{opacity:0}}
+@keyframes mGlitch{0%{opacity:0;transform:translateX(-.6em)}20%{opacity:1;transform:translateX(.4em)}40%{opacity:.2;transform:translateX(-.2em)}60%{opacity:1}80%{opacity:.5;transform:translateX(.15em)}}
+@keyframes mRise{from{transform:translateY(1em) scale(.95);opacity:0}}@keyframes mWipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 -10% 0 0)}}
+@keyframes mDrop{from{transform:translateY(-1.6em) rotate(-8deg);opacity:0}}@keyframes mInk{from{filter:blur(.7em);opacity:0}}
+@keyframes mGrow{from{transform:scaleY(0)}}@keyframes mIris{from{clip-path:circle(0 at 50% 50%)}to{clip-path:circle(120% at 50% 50%)}}
+.play :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-fill-mode:backwards}
+.play :is(.sub,.by,.cd:nth-child(1),.bar:nth-child(1)){animation-delay:calc(var(--stg)*1)}.play :is(.cd:nth-child(3),.bar:nth-child(2),.ln){animation-delay:calc(var(--stg)*2)}
+.play :is(.cd:nth-child(5),.cd:nth-child(2):not(.flow *),.bar:nth-child(3)){animation-delay:calc(var(--stg)*3)}.play :is(.cd:nth-child(3):not(.flow *),.bar:nth-child(4)){animation-delay:calc(var(--stg)*4)}.play .bar:nth-child(5){animation-delay:calc(var(--stg)*5)}
+.play.m-snap :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mPop;animation-duration:.24s;animation-timing-function:steps(4)}.m-snap{--stg:.09s}
+.play.m-print :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mFade;animation-duration:.08s}.m-print{--stg:.12s}
+.play.m-swiss :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln){animation-name:mSlide;animation-duration:.4s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}.m-swiss{--stg:.07s}
+.play.m-fade :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mFade;animation-duration:1.1s}.m-fade{--stg:.3s}
+.play.m-glow :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mGlitch;animation-duration:.45s;animation-timing-function:steps(6)}.m-glow{--stg:.1s}
+.play.m-type .ttl,.play.m-type .secn,.play.m-type .qt{animation:mWipe .9s steps(14) backwards}.play.m-type :is(.tag,.sub,.by,.cd,.ln,.bar){animation-name:mFade;animation-duration:.05s}.m-type{--stg:.25s}
+.play.m-float :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln){animation-name:mRise;animation-duration:.7s;animation-timing-function:cubic-bezier(.2,1.3,.3,1)}.m-float{--stg:.1s}
+.play.m-draw :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln){animation-name:mWipe;animation-duration:.8s;animation-timing-function:ease-out}.m-draw{--stg:.18s}
+.play.m-paper :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln){animation-name:mDrop;animation-duration:.5s;animation-timing-function:cubic-bezier(.3,1.5,.5,1)}.m-paper{--stg:.13s}
+.play.m-ink :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mInk;animation-duration:1.3s}.m-ink{--stg:.3s}
+.play.m-data :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln){animation-name:mRise;animation-duration:.35s}.m-data{--stg:.06s}
+.play.m-retro .in{animation:mIris .9s ease-out backwards}
+.play:is(.m-float,.m-draw,.m-paper,.m-data,.m-swiss) .bar{animation-name:mGrow;animation-duration:.7s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){.play *{animation:none!important}}
+@media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:static;max-height:none;order:-1}.gallery{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div><h1>PPT 风格提示词生成器</h1><p>挑一个视觉风格,填上主题,右边就是一段可以直接丢给 AI 的提示词。缩略图只是示意,真正决定效果的是提示词里的文字描述。</p></div>
+</div>
+<div class="layout">
+  <main>
+    <div class="tools"><input type="search" id="q" placeholder="搜索风格:蓝图、复古、dark、杂志…" aria-label="搜索风格"><button class="btn ghost" id="rand">随机来一个</button></div>
+    <div class="chips" id="chips" role="group" aria-label="按类别筛选"></div>
+    <div class="gallery" id="gal"></div>
+  </main>
+  <aside class="side">
+    <div class="box"><div id="preview"></div><div class="kinds" id="kinds" role="group" aria-label="范例页"></div>
+      <div class="cur"><b id="curZh"></b><span id="curEn"></span></div><p class="desc" id="curDesc"></p>
+      <div class="pal" id="pal" aria-label="调整配色"></div>
+      <div class="acts" style="margin-top:8px"><button class="btn ghost" id="replay" style="padding:5px 12px;font-size:.85rem">重播动效</button><span class="desc" id="moName" style="margin:0;align-self:center"></span></div>
+    </div>
+    <div class="box"><h2>你的内容</h2>
+      <label class="f">主题<input id="fTopic" type="text" placeholder="例如:2026 年 AI 基础设施投资框架"></label>
+      <div class="two"><label class="f">页数<input id="fPages" type="number" min="1" max="80" value="12"></label><label class="f">比例<select id="fRatio"><option>16:9</option><option>4:3</option><option>9:16 竖版</option><option>1:1</option></select></label></div>
+      <div class="two"><label class="f">受众<input id="fAud" type="text" placeholder="例如:投资人、同事、学生"></label><label class="f">用在哪<select id="fTool"><option value="general">通用对话 AI</option><option value="html">生成 HTML 幻灯片</option><option value="ppt">Gamma / Canva / WPS AI</option><option value="image">图像模型逐页出图</option></select></label></div>
+      <label class="f">动效强度<select id="fMotion"><option value="subtle">克制:转场加一组入场</option><option value="rich">丰富:入场、强调、图表动画都写</option><option value="none">不要动效</option></select></label>
+      <label class="f">大纲或素材(可留空)<textarea id="fOutline" placeholder="把要点、数据、章节贴在这里"></textarea></label>
+      <div class="opts"><label><input type="checkbox" id="oComp" checked>写出版式组件</label><label><input type="checkbox" id="oRule" checked>加内容原则</label><label><input type="checkbox" id="oKw" checked>附英文关键词</label><label><input type="checkbox" id="oAvoid" checked>写明禁止项</label></div>
+    </div>
+    <div class="box"><h2>提示词</h2><textarea id="out" aria-label="生成的提示词" spellcheck="false"></textarea>
+      <div class="acts"><button class="btn" id="copy">复制提示词</button><button class="btn ghost" id="dl">下载 .txt</button><span id="toast" role="status"></span></div>
+    </div>
+  </aside>
+</div>
+<footer>全部在浏览器本地运行,不联网、不上传。收藏保存在这台设备的浏览器里。想加新风格,在源码的 STYLES 数组里照格式添一条就行。</footer>
+
+<script>
+/* 每个风格:c=[背景,文字,主色,辅色,点缀];t=缩略图参数;其余字段进入提示词 */
+var CATS=["全部","收藏","粗野拼贴","极简瑞士","复古","科技未来","纸感手作","商务咨询","东方文化","柔和可爱","暗色戏剧","插画图形"];
+var STYLES=[
+{id:"neobrutal",zh:"新粗野主义糖果色",en:"Neo-Brutalism Candy",cat:"粗野拼贴",c:["#FF8FE8","#000000","#B8F2FA","#F7C948","#7EE787"],t:{g:"dots",bw:.16,r:0,sh:"hard",tf:"sans",tw:900,rot:1,tag:"pill-dark"},
+ look:"每页一个高饱和纯色背景(糖果粉、浅青、奶油白、亮黄轮换),叠低对比度等距点阵;所有元素 3–4px 纯黑描边加向右下偏移 8–10px 的纯黑硬阴影,无模糊、无渐变。",
+ comp:"黑底白字胶囊页眉「编号 · 章节 / 关键词」;浏览器窗口 mockup(三个彩色圆点加地址栏);微微旋转 ±2° 的白底数据大字卡,角上钉彩色圆点;色块节点加粗黑直角折线的流程图;荧光绿倾斜贴纸标签;黑底荧光绿等宽字的代码高亮条;出血裁切的超大半透明水印字;右下角粉底黑框来源角标。",
+ type:"英文与数字用粗重几何无衬线(Space Grotesk、Archivo Black),标签用等宽字体全大写加宽字距;中文用超粗黑体;字号对比极端。",mood:"技术向、俏皮、贴纸拼贴感,像独立开发者的视频讲解配图。",avoid:"柔和阴影、渐变、玻璃拟态、3D 效果、要点列表堆砌。",kw:"neo-brutalism, candy colors, thick black outlines, hard offset shadows, dot grid, sticker labels, slightly rotated cards"},
+{id:"riso",zh:"孔版印刷双色",en:"Risograph Two-Tone",cat:"粗野拼贴",c:["#E7ECE4","#2330D8","#FF5468","#FFC83D","#2330D8"],t:{g:"grain",bw:0,r:0,sh:"none",tf:"cond",tw:900,tsh:"riso",deco:"blob",tag:"none"},
+ look:"灰绿色纸张底,只用群青和珊瑚红两种油墨加少量黄色;颜色重叠处用正片叠底叠出深色;图形用网点和斜线代替实色;整页有细微纸张颗粒;标题带轻微红色错版。",
+ comp:"粗蓝线分栏代替卡片;超大珊瑚色数字配小号蓝色单位;大圆形色块与网点圆相互叠压;线稿示意图用两色套印。",type:"标题用粗黑或站酷庆科黄油体一类的展示字体,正文黑体;左对齐。",mood:"独立出版物、小册子、手工印刷的温度。",avoid:"卡片阴影、多于三种颜色、光滑渐变。",kw:"risograph print, two-color overprint, misregistration, halftone dots, paper grain, zine layout"},
+{id:"memphis",zh:"孟菲斯",en:"Memphis Design",cat:"粗野拼贴",c:["#FFF4D6","#1B1B1B","#FF5C8A","#2EC4B6","#FFD23F"],t:{g:"none",bw:.12,r:.2,sh:"hard",tf:"sans",tw:900,deco:"memphis",tag:"box"},
+ look:"浅色底上散布几何小图形:波浪线、锯齿、圆点、三角、半圆;高饱和粉、青、黄与黑色撞色;图形带黑描边和错位色块阴影。",comp:"几何贴片做页面角落装饰;错位双层色块标题框;圆点或条纹填充的图表;不规则排布的图片框。",type:"圆润粗壮的无衬线,标题可倾斜或错位排列。",mood:"八十年代、跳跃、玩心重。",avoid:"严肃网格、低饱和配色、写实摄影。",kw:"memphis design, 80s geometric shapes, squiggles, zigzag, bold pastel clash, black outlines"},
+{id:"collage",zh:"剪贴拼贴",en:"Cut-Paper Collage",cat:"粗野拼贴",c:["#EDE6D8","#1F1A17","#E4572E","#2E86AB","#F2C14E"],t:{g:"grain",bw:0,r:0,sh:"soft",tf:"serif",tw:900,rot:1,tag:"tape"},
+ look:"旧纸底,撕边纸片、黑白抠图人物、报刊字母拼贴标题、胶带与订书钉;色块像手剪的,边缘不齐。",comp:"撕纸边的内容框;胶带贴住的照片;剪报字母拼出的关键词;手画箭头和圈注。",type:"衬线与无衬线混排,大小不一,像从不同杂志剪下来。",mood:"达达、朋克杂志、手工感。",avoid:"完美对齐、统一圆角、光滑矢量。",kw:"cut paper collage, torn edges, ransom-note lettering, tape, halftone photo cutouts, dada zine"},
+{id:"street",zh:"街头涂鸦",en:"Street Graffiti",cat:"粗野拼贴",c:["#1A1A1A","#FFFFFF","#FF2E63","#08D9D6","#F9ED69"],t:{g:"half",bw:0,r:0,sh:"none",tf:"cond",tw:900,up:1,rot:1,tag:"box",tsh:"offset"},
+ look:"深色水泥墙或黑底,喷漆渐晕、滴漆、贴纸轰炸、半调网点;荧光粉、青、黄高对比。",comp:"喷漆质感的大标题;撕贴海报式图片;警示胶带分隔条;手写 tag 式批注。",type:"压缩粗体全大写,配手写马克笔字。",mood:"地下、潮牌、滑板文化。",avoid:"商务蓝、细线图标、整洁留白。",kw:"street art, graffiti, spray paint drips, sticker bombing, halftone, neon on black, condensed type"},
+{id:"comic",zh:"美漫波普",en:"Comic Pop Art",cat:"插画图形",c:["#FFE14D","#111111","#E63946","#1D6FE0","#FFFFFF"],t:{g:"half",bw:.18,r:0,sh:"hard",tf:"cond",tw:900,up:1,tag:"burst"},
+ look:"本戴点(Ben-Day dots)底纹,三原色加黑白,粗黑描线;分镜格切分页面;爆炸形与速度线。",comp:"分镜格布局;对话气泡放要点;爆炸框放关键数字;拟声词大字做章节页。",type:"漫画手写体或压缩粗体全大写,带黑描边。",mood:"夸张、直接、有冲击力。",avoid:"柔和配色、细字重、写实照片。",kw:"pop art, comic book panels, ben-day dots, speech bubbles, bold primary colors, Lichtenstein"},
+
+{id:"swiss",zh:"瑞士国际主义",en:"Swiss International",cat:"极简瑞士",c:["#FFFFFF","#111111","#E30613","#111111","#BDBDBD"],t:{g:"none",bw:0,r:0,sh:"none",tf:"sans",tw:800,tag:"none",bar:1},
+ look:"纯白底,严格的模块化网格,大量留白;只用黑、白和一种信号红;靠字号与位置建立层级。",comp:"左对齐的超大标题;细黑线分栏;编号只在真正的序列里使用;图表只有黑线和一处红色强调。",type:"Helvetica 或 Akzidenz 一类无衬线,字重对比明确,紧字距标题。",mood:"理性、克制、永不过时。",avoid:"装饰图形、渐变、居中对齐、圆角卡片。",kw:"swiss design, international typographic style, modular grid, helvetica, red accent, generous white space"},
+{id:"bauhaus",zh:"包豪斯",en:"Bauhaus",cat:"极简瑞士",c:["#F3EFE4","#1A1A1A","#D62828","#1D4E9E","#F2B705"],t:{g:"none",bw:0,r:0,sh:"none",tf:"sans",tw:800,deco:"bauhaus",tag:"none"},
+ look:"米白底上红、黄、蓝三原色与黑;圆、方、三角的基本形构成;斜向或不对称的构图。",comp:"几何形做章节页主视觉;粗黑横线与竖线分割;图表用纯色几何块。",type:"几何无衬线(Futura 一类),可全小写标题。",mood:"功能主义、建筑感、现代主义学院。",avoid:"写实插画、纹理、阴影。",kw:"bauhaus, primary colors, circle square triangle, geometric composition, futura, asymmetry"},
+{id:"mono",zh:"极简黑白",en:"Monochrome Minimal",cat:"极简瑞士",c:["#FAFAFA","#0A0A0A","#0A0A0A","#8A8A8A","#EAEAEA"],t:{g:"none",bw:.06,r:0,sh:"none",tf:"sans",tw:700,tag:"underline"},
+ look:"只有黑、白、灰;极大留白;一页一句话或一个数字;细线与小号文字。",comp:"整页居左一句话;超大数字页;全出血黑白摄影配小字说明。",type:"单一无衬线家族,用字重和字号拉开层级。",mood:"安静、自信、像画廊墙面。",avoid:"任何彩色、图标堆砌、多于三个层级。",kw:"monochrome minimal, black and white, huge white space, single sentence per slide, gallery feel"},
+{id:"constructiv",zh:"苏联构成主义",en:"Constructivism",cat:"极简瑞士",c:["#EDE3CF","#141414","#D7261E","#141414","#EDE3CF"],t:{g:"grain",bw:0,r:0,sh:"none",tf:"cond",tw:900,up:1,deco:"diag",tag:"box"},
+ look:"旧纸色底,红与黑;强烈的对角线构图、楔形、放射线;黑白照片抠图配色块。",comp:"斜切色块承载标题;放射线指向重点;照片蒙太奇。",type:"压缩粗体全大写,可沿斜线排布。",mood:"宣言式、动员感、力量。",avoid:"柔和、圆润、对称居中。",kw:"russian constructivism, red and black, diagonal composition, photomontage, propaganda poster"},
+{id:"japanmin",zh:"和风极简",en:"Japanese Minimal",cat:"东方文化",c:["#F4F1EA","#2B2B2B","#B5392F","#6B7F6A","#C9BFA9"],t:{g:"none",bw:0,r:0,sh:"none",tf:"serif",tw:500,tag:"seal",align:"left"},
+ look:"和纸色底,大面积留白(间);墨色文字,一点朱红;细竖线与小圆点做标记;不对称构图。",comp:"竖排小标题;朱红印章式页码;单张留白摄影;细线框住的短句。",type:"明朝体或宋体,字重轻,字距宽。",mood:"侘寂、静、克制。",avoid:"高饱和色、粗描边、满版内容。",kw:"japanese minimalism, wabi-sabi, washi paper, vermilion seal, vertical text, ma negative space"},
+
+{id:"midcentury",zh:"美式中古海报",en:"Mid-Century Modern",cat:"复古",c:["#F1E4C8","#2D2A26","#D9572B","#2A7F78","#E8B13C"],t:{g:"grain",bw:0,r:.3,sh:"none",tf:"sans",tw:800,deco:"sun",tag:"pill"},
+ look:"奶油纸色底,橘、青绿、芥末黄;星芒、回旋镖、原子图形;扁平色块插画带轻微错版。",comp:"星芒做强调标记;圆角色块分区;剪影式插画;复古徽章放数字。",type:"几何无衬线配手写 script 点缀。",mood:"五十年代乐观主义、广告黄金时代。",avoid:"霓虹色、写实渲染、深色背景。",kw:"mid-century modern, 1950s advertising, atomic starburst, boomerang shapes, muted orange teal mustard"},
+{id:"artdeco",zh:"装饰艺术",en:"Art Deco",cat:"复古",c:["#0F1C2E","#E8D7A5","#C9A24B","#1F4E5F","#E8D7A5"],t:{g:"frame2",bw:.06,r:0,sh:"none",tf:"serif",tw:700,up:1,tag:"none",align:"center"},
+ look:"深海军蓝或黑底配金色线条;扇形、阶梯、放射与对称几何;双线边框。",comp:"对称居中的标题页;金线分隔;扇形或阶梯形图表装饰;徽章式章节号。",type:"高瘦的装饰衬线或几何无衬线全大写,宽字距。",mood:"盖茨比、爵士时代、奢华。",avoid:"不对称、手绘、糖果色。",kw:"art deco, gold lines on navy, symmetrical geometry, fan motifs, gatsby, 1920s luxury"},
+{id:"psy70",zh:"七十年代迷幻",en:"70s Groovy",cat:"复古",c:["#F6E7C1","#3B1F0B","#E4572E","#F2A541","#8A5A44"],t:{g:"none",bw:0,r:1,sh:"none",tf:"round",tw:900,deco:"waves",tag:"pill"},
+ look:"奶油底配棕、橙、芥黄的暖色阶;流动的波浪条纹、同心拱形、大圆角。",comp:"多层彩虹拱形做章节页;波浪条纹分隔;圆润色块承载内容。",type:"圆胖的展示字体(Cooper Black 一类)。",mood:"放松、阳光、黑胶唱片封套。",avoid:"冷色、尖角、细字重。",kw:"1970s groovy, warm brown orange mustard, wavy stripes, rainbow arches, cooper black"},
+{id:"citypop",zh:"昭和城市流行",en:"City Pop",cat:"复古",c:["#1B2A6B","#FDF6E3","#FF6FB5","#3DD6D0","#FFD166"],t:{g:"none",bw:0,r:0,sh:"none",tf:"sans",tw:800,grad:"linear-gradient(180deg,#1B2A6B 0%,#5B3FA6 55%,#FF8FB1 100%)",deco:"sunset",tag:"box"},
+ look:"夜蓝到粉紫的晚霞渐变;棕榈、泳池、海岸公路、落日圆盘;粉、青、黄的霓虹点缀。",comp:"落日圆盘做主视觉;磁带与唱片封套式版式;细线边框配日文罗马字小标题。",type:"几何无衬线加斜体英文,可配片假名装饰。",mood:"八十年代东京夏夜、怀旧、轻快。",avoid:"灰暗配色、粗野描边。",kw:"city pop, 80s japan, sunset gradient, palm trees, pastel neon, cassette cover"},
+{id:"vapor",zh:"蒸汽波",en:"Vaporwave",cat:"复古",c:["#2B1055","#F8F8FF","#FF71CE","#01CDFE","#B967FF"],t:{g:"persp",bw:0,r:0,sh:"glow",tf:"serif",tw:700,up:1,grad:"linear-gradient(180deg,#2B1055,#7597DE)",deco:"sunset",tag:"box"},
+ look:"紫到蓝的渐变天空,透视网格地面,条纹落日;粉与青的霓虹;古典石膏像、旧系统窗口、棋盘格。",comp:"Windows 95 风格窗口承载内容;透视网格章节页;故障条纹装饰。",type:"宽字距全大写衬线,配全角日文字符装饰。",mood:"怀旧未来、互联网亚文化。",avoid:"商务感、写实照片、克制配色。",kw:"vaporwave, synthwave grid, pink cyan neon, striped sun, greek bust, windows 95 ui"},
+{id:"pixel",zh:"像素街机",en:"Pixel Arcade",cat:"复古",c:["#1D1B3A","#F4F4F4","#FF4D6D","#4CC9F0","#FEE440"],t:{g:"lines",bw:.2,r:0,sh:"hard",tf:"mono",tw:900,up:1,tag:"box"},
+ look:"深蓝紫底,8-bit 像素图形与像素字体;阶梯状边框;限色调色板。",comp:"像素对话框放内容;血条与经验条做进度和数据;关卡选择式目录;像素图标。",type:"像素点阵字体,标题全大写。",mood:"游戏机厅、闯关、复古电子。",avoid:"平滑曲线、渐变、衬线字体。",kw:"8-bit pixel art, arcade, pixel font, dialog box, health bar, limited palette"},
+{id:"y2k",zh:"千禧 Y2K",en:"Y2K",cat:"复古",c:["#DFE9F5","#1B2340","#7AA7FF","#FF9DE2","#C0C8D6"],t:{g:"none",bw:.05,r:1.2,sh:"glow",tf:"sans",tw:800,grad:"linear-gradient(135deg,#DFE9F5,#C9D6FF 50%,#F6D1F5)",deco:"orb",tag:"pill"},
+ look:"银色金属与冰蓝、粉紫的镭射渐变;液态铬质感、气泡、星芒、透明塑料。",comp:"胶囊形按钮式标签;气泡形内容框;铬金属质感大标题;星芒与线框球体装饰。",type:"未来感圆角无衬线或拉伸的展示字体。",mood:"两千年前后的科技乐观、翻盖手机、CD 封面。",avoid:"纸质纹理、大地色、衬线。",kw:"y2k aesthetic, chrome, iridescent gradient, bubbles, futuristic rounded type, early 2000s"},
+{id:"newspaper",zh:"报纸头版",en:"Newspaper Front Page",cat:"复古",c:["#F2EFE6","#151515","#151515","#8C1C13","#CFC9B8"],t:{g:"grain",bw:.04,r:0,sh:"none",tf:"serif",tw:900,tag:"underline",cols:1},
+ look:"新闻纸色底,黑色油墨;多栏排版、细线分栏、报头与日期行;黑白半调照片。",comp:"报头式标题页;多栏正文配首字下沉;通栏大标题;图片配斜体图注;边栏小框放数据。",type:"粗衬线标题,正文衬线小字号,两端对齐。",mood:"权威、时事、号外。",avoid:"彩色图标、圆角、卡片阴影。",kw:"vintage newspaper, multi-column layout, masthead, serif headlines, halftone photos, newsprint"},
+{id:"fieldguide",zh:"博物图鉴",en:"Vintage Field Guide",cat:"复古",c:["#EFE6D2","#2F2A22","#5B7553","#A4492F","#C8B68A"],t:{g:"frame",bw:.04,r:0,sh:"none",tf:"serif",tw:700,tag:"underline"},
+ look:"泛黄纸张,铜版画与水彩博物插图;细线边框、编号图注、拉丁学名式的小字。",comp:"标本式插图配引线标注;图版编号(Plate I);双栏说明;手绘地图与等高线。",type:"古典衬线加斜体注释。",mood:"十九世纪自然志、探险手册。",avoid:"荧光色、扁平图标、无衬线粗体。",kw:"vintage naturalist field guide, botanical engraving, plate numbers, aged paper, latin captions"},
+
+{id:"blueprint",zh:"工程蓝图",en:"Blueprint",cat:"科技未来",c:["#0F2A5C","#EAF2FF","#FFB020","#6FD3FF","#EAF2FF"],t:{g:"lines",bw:.06,r:0,sh:"none",tf:"sans",tw:300,tag:"box-line",cfill:"none"},
+ look:"深普鲁士蓝底配粗细两级网格;白色细线稿;整页有图框,角上有图号栏和标题栏;图形用剖面线和网点填充,不用实色块。",comp:"线稿结构图加引线编号与零件表;尺寸标注线;琥珀色只留给关键数值和当前重点;等宽数字。",type:"细体黑体配等宽数字(IBM Plex Mono),标题轻字重加一道琥珀色短线。",mood:"工程图纸、严谨、技术手册。",avoid:"实色大色块、圆角卡片、粗重标题。",kw:"engineering blueprint, prussian blue, white line art, grid, title block, hatching, amber accent"},
+{id:"cyber",zh:"赛博朋克霓虹",en:"Cyberpunk Neon",cat:"科技未来",c:["#0A0314","#EDEBFF","#FF2A6D","#05D9E8","#F9F002"],t:{g:"scan",bw:.05,r:0,sh:"glow",tf:"cond",tw:900,up:1,tag:"cut",tsh:"glow"},
+ look:"近黑紫底,品红与青的霓虹发光;扫描线、故障错位、切角边框;雨夜城市与汉字招牌意象。",comp:"切角面板承载内容;故障效果标题;发光描边图表;警告条纹与小号系统读数装饰。",type:"压缩无衬线全大写,配等宽小字。",mood:"高科技低生活、夜之城。",avoid:"柔和粉彩、纸质感、大面积留白。",kw:"cyberpunk, neon magenta cyan glow, glitch, scanlines, chamfered panels, night city"},
+{id:"terminal",zh:"终端黑客",en:"Terminal",cat:"科技未来",c:["#0B0F0C","#C8F7C5","#39FF14","#7EE787","#FFB000"],t:{g:"scan",bw:.05,r:0,sh:"none",tf:"mono",tw:700,tag:"prompt",cfill:"none"},
+ look:"黑底绿字的命令行;等宽字体、闪烁光标、ASCII 边框与字符画;偶尔一处琥珀色。",comp:"命令提示符式标题($ 开头);ASCII 表格与进度条;代码块承载要点;日志滚动式列表。",type:"全程等宽字体。",mood:"极客、后台、直接。",avoid:"图片、图标、任何圆角与渐变。",kw:"terminal ui, green on black, monospace, ascii art borders, command prompt, crt scanlines"},
+{id:"hud",zh:"科幻 HUD",en:"Sci-Fi HUD",cat:"科技未来",c:["#03121C","#CFF6FF","#00E5FF","#FF9F1C","#1B4B5A"],t:{g:"lines",bw:.05,r:0,sh:"glow",tf:"sans",tw:600,up:1,tag:"cut",cfill:"none",deco:"ring"},
+ look:"深蓝黑底,青色细线界面;环形刻度、十字准星、角标括线、数据流小字;半透明面板。",comp:"环形仪表放核心指标;括角框选重点;细线雷达图与波形;分区编号与坐标读数装饰。",type:"宽体科技无衬线全大写,小号等宽读数。",mood:"飞船驾驶舱、钢铁侠界面。",avoid:"实色大块、衬线、手绘。",kw:"sci-fi hud, fui, cyan line interface, circular gauges, corner brackets, holographic panels"},
+{id:"glass",zh:"玻璃拟态",en:"Glassmorphism",cat:"科技未来",c:["#1E1B4B","#FFFFFF","#A78BFA","#38BDF8","#F472B6"],t:{g:"none",bw:.04,r:.9,sh:"soft",tf:"sans",tw:700,grad:"radial-gradient(circle at 20% 20%,#7C3AED,transparent 55%),radial-gradient(circle at 85% 75%,#0EA5E9,transparent 55%),#1E1B4B",tag:"pill",glass:1},
+ look:"深色或彩色渐变光斑背景上浮着磨砂玻璃面板:半透明、背景模糊、细白高光描边、柔和投影。",comp:"磨砂玻璃卡片分层叠放;发光小圆点状态;半透明图表;大圆角。",type:"现代无衬线,中等字重,白字。",mood:"系统级界面、轻盈、通透。",avoid:"硬阴影、粗描边、纸质纹理。",kw:"glassmorphism, frosted glass cards, background blur, soft gradient blobs, thin white borders"},
+{id:"aurora",zh:"极光渐变",en:"Aurora Gradient",cat:"科技未来",c:["#0B1020","#F5F7FF","#7CFFCB","#6A8DFF","#FF7AD9"],t:{g:"none",bw:0,r:.8,sh:"none",tf:"sans",tw:700,grad:"radial-gradient(ellipse at 10% 90%,#1CE3A6 0,transparent 50%),radial-gradient(ellipse at 90% 10%,#7A5CFF 0,transparent 55%),radial-gradient(ellipse at 70% 90%,#FF5CAA 0,transparent 45%),#0B1020",tag:"pill-line",cfill:"ghost"},
+ look:"深色底上大面积流动的网格渐变(mesh gradient),像极光;带细腻噪点;内容极简地浮在上面。",comp:"大标题直接压在渐变上;细线胶囊标签;半透明深色面板放图表;一页一重点。",type:"紧字距的现代无衬线大标题。",mood:"AI 产品发布、前沿、流动。",avoid:"多色块拼贴、描边、复杂装饰。",kw:"aurora mesh gradient, dark background, flowing color, grain texture, minimal overlay text"},
+{id:"dashboard",zh:"数据仪表盘",en:"Dark Dashboard",cat:"科技未来",c:["#0E1116","#E6EDF3","#3FB950","#58A6FF","#F78166"],t:{g:"none",bw:.04,r:.4,sh:"none",tf:"sans",tw:700,tag:"box-line",cbg:"#161B22"},
+ look:"近黑底,深灰面板,细边框;语义色:绿涨、红跌、蓝中性;密集但对齐严格的数据布局。",comp:"KPI 数字卡带迷你折线;多面板栅格;表格加条件色;时间序列图配注释线。",type:"无衬线正文,数字用等宽表格数字。",mood:"交易终端、监控大屏、分析师视角。",avoid:"装饰插画、大留白、花哨字体。",kw:"dark analytics dashboard, kpi cards, sparklines, dense grid, semantic green red, tabular numbers"},
+{id:"cleantech",zh:"清爽科技蓝",en:"Clean Tech",cat:"商务咨询",c:["#FFFFFF","#0F172A","#2563EB","#38BDF8","#E2E8F0"],t:{g:"none",bw:.04,r:.5,sh:"soft",tf:"sans",tw:800,tag:"pill-soft"},
+ look:"白底加浅灰蓝分区,一支主蓝色;细线图标,轻投影卡片,充足留白。",comp:"三栏特性卡;线性图标;简洁流程箭头;产品截图配设备框。",type:"现代无衬线,标题粗、正文常规。",mood:"可信、专业、SaaS 官网。",avoid:"多于两种强调色、重纹理、夸张字体。",kw:"clean corporate tech, white and blue, line icons, soft shadows, saas landing style"},
+
+{id:"keynote",zh:"发布会暗场",en:"Keynote Dark",cat:"暗色戏剧",c:["#000000","#F5F5F7","#F5F5F7","#86868B","#2997FF"],t:{g:"none",bw:0,r:.8,sh:"none",tf:"sans",tw:700,align:"center",tag:"none",cbg:"#1D1D1F",grad:"radial-gradient(ellipse at 50% 120%,#1b1b22 0,#000 60%)"},
+ look:"纯黑底,产品或关键词居中,聚光灯式渐暗;每页只有一句话或一个数字;偶尔一处蓝色或渐变文字。",comp:"超大居中标题;单个巨型数字加一行小字;全出血产品图;深灰圆角面板的对比页。",type:"SF Pro 一类无衬线,大字号、紧字距、半粗。",mood:"发布会、自信、戏剧化停顿。",avoid:"要点列表、多栏、页脚页码、装饰图形。",kw:"apple keynote style, pure black background, one idea per slide, huge centered type, spotlight gradient"},
+{id:"luxury",zh:"黑金奢华",en:"Luxury Black Gold",cat:"暗色戏剧",c:["#0C0C0C","#EDE6D6","#C8A45C","#8C7440","#1A1A1A"],t:{g:"frame",bw:.04,r:0,sh:"none",tf:"serif",tw:500,up:1,align:"center",tag:"none",cfill:"none"},
+ look:"哑光黑底,香槟金细线与小面积金色;大留白;精致的细边框与徽标式排版。",comp:"居中的宽字距标题;金色细线分隔;单图全出血配小字;罗马数字章节。",type:"高对比衬线(Didot 一类)全大写宽字距,正文细无衬线。",mood:"高定、腕表、邀请函。",avoid:"多彩、粗体、卡通图标。",kw:"luxury black and gold, thin gold lines, didot serif, wide tracking, elegant minimal"},
+{id:"darkacademia",zh:"暗黑学院",en:"Dark Academia",cat:"暗色戏剧",c:["#1F1A17","#E9DFC9","#8B5E34","#5A6B4E","#B08D57"],t:{g:"grain",bw:.04,r:0,sh:"none",tf:"serif",tw:700,tag:"underline",cfill:"none"},
+ look:"深棕黑底,旧书页米色文字;皮革、烛光、油画、手稿与拉丁文意象;暖色低调光。",comp:"古典油画做整页背景加暗角;手稿式批注;书页边框;章节用罗马数字。",type:"古典衬线与斜体,小型大写字母。",mood:"图书馆、哥特校园、沉静。",avoid:"荧光色、无衬线粗体、扁平图标。",kw:"dark academia, old library, candlelight, classical paintings, serif italics, aged parchment"},
+{id:"cinema",zh:"电影宽幅",en:"Cinematic",cat:"暗色戏剧",c:["#0D0D0F","#F2F2F2","#E50914","#C9A227","#3A3A3F"],t:{g:"none",bw:0,r:0,sh:"none",tf:"cond",tw:800,up:1,tag:"none",letter:1},
+ look:"黑底,上下遮幅黑边;全出血电影剧照式图片,青橙调色;字幕式小字。",comp:"片名式章节页;字幕条放要点;分镜脚本式多图页;片尾字幕式致谢。",type:"压缩无衬线全大写宽字距,配小号衬线斜体。",mood:"预告片、叙事张力。",avoid:"图标、图表堆砌、明亮背景。",kw:"cinematic widescreen, letterbox bars, teal and orange grade, film title typography, subtitles"},
+{id:"filmphoto",zh:"胶片相册",en:"Film & Polaroid",cat:"纸感手作",c:["#F3EFE7","#2A2622","#C0392B","#2F5D62","#D9CDB8"],t:{g:"grain",bw:0,r:.1,sh:"soft",tf:"serif",tw:600,rot:1,tag:"tape",cbg:"#FFFFFF"},
+ look:"米色底,宝丽来相框、胶片齿孔边、接触印相小样;轻微颗粒与漏光;手写日期。",comp:"微微旋转的宝丽来照片配手写说明;胶片条做时间线;接触印相做图片墙。",type:"打字机体配手写体。",mood:"旅行日志、回忆、温柔。",avoid:"矢量图标、强对比色块、科技感。",kw:"polaroid frames, 35mm film strip, contact sheet, light leaks, handwritten captions, grain"},
+
+{id:"sketchnote",zh:"手绘白板",en:"Sketchnote Whiteboard",cat:"纸感手作",c:["#FFFFFF","#1F2933","#2B6CB0","#E53E3E","#F6E05E"],t:{g:"none",bw:.1,r:.5,sh:"none",tf:"round",tw:700,rot:1,tag:"hand",cfill:"none",wob:1},
+ look:"白板或白纸底,马克笔手绘线条,线条略抖;黑色为主,蓝、红两支彩笔加荧光黄高亮。",comp:"手画方框、箭头、火柴人和小图标;荧光笔划重点;云朵形备注;手绘图表。",type:"手写体标题与正文。",mood:"工作坊、头脑风暴、亲切。",avoid:"精确几何、渐变、照片。",kw:"sketchnote, whiteboard marker doodles, hand-drawn arrows, stick figures, highlighter yellow"},
+{id:"chalk",zh:"黑板粉笔",en:"Chalkboard",cat:"纸感手作",c:["#22332B","#F4F1E8","#F6D55C","#ED8C72","#9AD1D4"],t:{g:"grain",bw:.08,r:.2,sh:"none",tf:"round",tw:700,tag:"hand",cfill:"none"},
+ look:"墨绿或炭黑的黑板底,带擦拭痕迹;白色粉笔线条加黄、粉、蓝彩色粉笔。",comp:"粉笔手写标题加下划波浪线;手绘图解与公式;边角的粉笔装饰花边;木框。",type:"粉笔手写体,标题可用咖啡馆菜单式花体。",mood:"课堂、咖啡馆菜单板、教学。",avoid:"纯白底、矢量图标、无衬线印刷体。",kw:"chalkboard, chalk lettering, hand-drawn diagrams, dusty texture, cafe menu board"},
+{id:"kraft",zh:"牛皮纸手帐",en:"Kraft Scrapbook",cat:"纸感手作",c:["#C9A77C","#2E241A","#FFFFFF","#C0392B","#3E6B5C"],t:{g:"grain",bw:0,r:.1,sh:"soft",tf:"serif",tw:700,rot:1,tag:"tape",cbg:"#FBF7EE"},
+ look:"牛皮纸底,白色便签与撕边纸片;和纸胶带、邮戳、回形针、麻绳;手写与印章。",comp:"胶带贴住的便签放要点;邮戳式日期与编号;票根式数据卡;手绘小插图。",type:"打字机体配手写体,印章用粗衬线。",mood:"手帐、旅行剪贴本、温暖。",avoid:"荧光色、金属质感、严格网格。",kw:"kraft paper scrapbook, washi tape, stamps, torn notes, typewriter font, journal"},
+{id:"sticky",zh:"便利贴看板",en:"Sticky Notes Board",cat:"纸感手作",c:["#EEF1F4","#1F2937","#FDE68A","#A7F3D0","#FBCFE8"],t:{g:"dots",bw:0,r:.05,sh:"soft",tf:"round",tw:700,rot:1,tag:"none",cfg:"#1F2937"},
+ look:"浅灰软木板或白板底,彩色便利贴(黄、绿、粉、蓝)略微旋转、带一点卷角阴影;图钉与连线。",comp:"便利贴分组成列做看板;红线连接的关系图;点票小圆点;马克笔写的列标题。",type:"马克笔手写体。",mood:"设计冲刺、敏捷看板、协作。",avoid:"深色背景、衬线、精致装饰。",kw:"sticky notes wall, kanban board, post-it colors, pins and strings, marker handwriting"},
+{id:"watercolor",zh:"水彩晕染",en:"Watercolor Wash",cat:"纸感手作",c:["#FBFAF7","#2F3A4A","#6FA8DC","#F4A6B5","#B7D7A8"],t:{g:"grain",bw:0,r:1,sh:"none",tf:"serif",tw:600,deco:"wash",tag:"none",align:"center",cfill:"ghost"},
+ look:"水彩纸白底,柔和的水彩晕染色斑与笔触边缘;低饱和蓝、粉、绿;细铅笔线。",comp:"晕染色斑垫在标题后;手绘植物边角;细线图表配淡彩填充。",type:"优雅衬线配细手写体。",mood:"婚礼请柬、文艺、轻柔。",avoid:"硬边色块、黑色粗线、高饱和。",kw:"watercolor wash, soft pastel blotches, paper texture, botanical corners, elegant serif"},
+
+{id:"consulting",zh:"咨询公司",en:"Consulting Deck",cat:"商务咨询",c:["#FFFFFF","#1A1A1A","#003A70","#00A3A1","#D9D9D9"],t:{g:"none",bw:.04,r:0,sh:"none",tf:"sans",tw:700,tag:"none",bar:1,small:1},
+ look:"白底,深蓝加一支青绿;每页顶部是一句完整的结论式标题(action title);信息密度高但对齐严格;页脚有来源与页码。",comp:"结论标题加支撑图表;瀑布图、Mekko 图、二乘二矩阵、哈维球;左文右图;编号脚注与数据来源。",type:"Arial 或 Helvetica,标题两行以内,正文偏小。",mood:"麦肯锡、严谨、结论先行。",avoid:"装饰图片、大字报、花哨动画、居中排版。",kw:"management consulting slide, action titles, waterfall chart, 2x2 matrix, harvey balls, source footnotes"},
+{id:"editorial",zh:"编辑杂志",en:"Editorial Magazine",cat:"商务咨询",c:["#F7F5F0","#161616","#C1121F","#161616","#B8B2A7"],t:{g:"none",bw:0,r:0,sh:"none",tf:"serif",tw:900,tag:"underline",big:1},
+ look:"米白底,超大衬线标题与全出血摄影;不对称网格;引文放大;细线与小号说明文字。",comp:"跨页式大图配压图标题;放大的引语页;首字下沉;图注与页眉小字;数字专题页。",type:"高对比衬线标题配无衬线小字正文。",mood:"时尚杂志、特稿、讲故事。",avoid:"卡片、图标、项目符号。",kw:"editorial magazine layout, oversized serif headlines, full-bleed photography, pull quotes, asymmetrical grid"},
+{id:"academic",zh:"学术报告",en:"Academic Beamer",cat:"商务咨询",c:["#FFFFFF","#1B1B1B","#1F3A93","#8E1B1B","#E6E8EF"],t:{g:"none",bw:.04,r:.15,sh:"none",tf:"serif",tw:700,tag:"none",bar:2,small:1},
+ look:"白底,校徽色页眉条与进度导航;公式、定理框、参考文献;图表规范带编号。",comp:"顶部章节导航条;定理与定义的色框;公式居中编号;图表带 Figure 编号与说明;末页参考文献。",type:"衬线正文(Computer Modern 或宋体),公式用数学字体。",mood:"学术会议、答辩、严谨。",avoid:"装饰图片、口号式大字、花哨配色。",kw:"academic beamer presentation, latex style, theorem boxes, equations, figure captions, navigation bar"},
+{id:"flatcorp",zh:"扁平企业插画",en:"Corporate Flat",cat:"插画图形",c:["#F5F7FF","#1E2A5A","#5B6CFF","#FF8A5B","#FFD37A"],t:{g:"none",bw:0,r:.7,sh:"soft",tf:"sans",tw:800,deco:"blob",tag:"pill-soft"},
+ look:"浅蓝紫底,扁平矢量人物与场景插画;蓝紫主色加珊瑚橙点缀;大圆角与柔和色块。",comp:"左文右插画;圆角色块承载数据;线性加面性混合图标;波浪形分区。",type:"友好的圆角无衬线。",mood:"互联网公司、亲和、现代。",avoid:"写实照片、深色、尖锐几何。",kw:"flat vector illustration, corporate, friendly characters, rounded shapes, blue purple with coral"},
+{id:"isometric",zh:"等距插画",en:"Isometric",cat:"插画图形",c:["#EEF2FF","#1E1B4B","#6366F1","#22D3EE","#F59E0B"],t:{g:"none",bw:0,r:.4,sh:"soft",tf:"sans",tw:800,deco:"iso",tag:"pill-soft"},
+ look:"浅色底,2.5D 等距视角的建筑、设备、流程场景;统一 30° 角;同色系明暗三面。",comp:"等距城市或机房做系统架构图;悬浮平台分层表示技术栈;等距图标;连线带流动小点。",type:"几何无衬线。",mood:"科技解释、系统全景。",avoid:"透视混用、手绘线条、复古纹理。",kw:"isometric illustration, 2.5d, tech infrastructure scene, floating platforms, consistent 30 degree"},
+{id:"clay",zh:"3D 黏土",en:"Claymorphism 3D",cat:"柔和可爱",c:["#F3EEFF","#2D2A4A","#A78BFA","#FDA4AF","#86EFAC"],t:{g:"none",bw:0,r:1.2,sh:"clay",tf:"round",tw:800,tag:"pill-soft"},
+ look:"柔和粉彩底,充气感或黏土质感的 3D 物件;超大圆角,内外双层柔和阴影;哑光材质。",comp:"3D 小物件做图标;鼓起的圆角面板;胖胖的图表柱;漂浮的几何体装饰。",type:"圆润粗体无衬线。",mood:"可爱、友好、玩具感。",avoid:"锐利边角、细线、深色底。",kw:"claymorphism, soft 3d, inflated shapes, pastel, matte material, big rounded corners"},
+{id:"neumorph",zh:"新拟物",en:"Neumorphism",cat:"柔和可爱",c:["#E6EBF2","#334155","#3B82F6","#94A3B8","#E6EBF2"],t:{g:"none",bw:0,r:.9,sh:"neu",tf:"sans",tw:700,tag:"pill-neu",cbg:"#E6EBF2"},
+ look:"与背景同色的浅灰蓝元素,靠左上高光加右下暗影的双阴影凸起或凹陷;几乎无描边;一支强调色。",comp:"凸起的圆角面板;凹陷的进度槽;圆形旋钮式指标;开关与滑块意象。",type:"中等字重无衬线,对比度适中。",mood:"柔软、触感、安静。",avoid:"高对比色块、硬边、纹理。",kw:"neumorphism, soft ui, same-color extruded shapes, dual shadows, light gray blue"},
+{id:"morandi",zh:"莫兰迪北欧",en:"Morandi Nordic",cat:"柔和可爱",c:["#EEE9E2","#3F3A36","#A3B1A8","#D4A59A","#C9B79C"],t:{g:"none",bw:0,r:.6,sh:"none",tf:"sans",tw:600,deco:"arch",tag:"none"},
+ look:"灰调低饱和的莫兰迪色:雾绿、灰粉、燕麦、陶土;大色块与拱形、圆形的有机形;亚麻质感。",comp:"拱形图片框;圆与半圆的叠放构图;留白多的图文页;细线小图标。",type:"轻字重无衬线配纤细衬线标题。",mood:"北欧家居、生活方式、平和。",avoid:"高饱和、黑色粗线、科技元素。",kw:"morandi palette, muted sage dusty pink oat, arches, organic shapes, scandinavian calm"},
+{id:"kids",zh:"儿童绘本",en:"Kids Storybook",cat:"柔和可爱",c:["#FFF7E0","#3A2E2A","#FF7A59","#4FC3F7","#FFD54F"],t:{g:"none",bw:.12,r:1,sh:"none",tf:"round",tw:900,rot:1,deco:"sun2",tag:"pill",wob:1},
+ look:"暖黄底,蜡笔与水粉质感的手绘插画;明亮的橙、天蓝、柠檬黄;歪歪的手绘描边。",comp:"大插画配一两句话;云朵与对话气泡;贴纸式奖章;手绘路径地图做流程。",type:"圆胖手写风字体,字大行疏。",mood:"童趣、温暖、讲故事。",avoid:"小字、密集信息、冷色调。",kw:"children's picture book, crayon gouache texture, wobbly outlines, bright friendly colors"},
+{id:"kawaii",zh:"日系可爱",en:"Kawaii Pastel",cat:"柔和可爱",c:["#FFF0F6","#5B4B6B","#FF9EC4","#A5D8FF","#FFF3A3"],t:{g:"dots",bw:.08,r:1.2,sh:"none",tf:"round",tw:800,tag:"pill",deco:"orb"},
+ look:"粉白底配马卡龙色;圆点、星星、爱心、云朵小图案;圆滚滚的表情角色;细描边。",comp:"贴纸式小角色点缀;缎带形标题;圆角气泡框;波点分隔条。",type:"圆体,标题可带描边与小高光。",mood:"软萌、少女、手账贴纸。",avoid:"深色、硬朗线条、严肃排版。",kw:"kawaii pastel, macaron colors, cute mascots, stars hearts clouds, rounded bubbly type"},
+
+{id:"inkwash",zh:"水墨国风",en:"Ink Wash",cat:"东方文化",c:["#F5F1E6","#1C1C1C","#9E2A2B","#5C6B5E","#BFB8A5"],t:{g:"grain",bw:0,r:0,sh:"none",tf:"serif",tw:700,deco:"ink",tag:"seal",align:"left"},
+ look:"宣纸底,浓淡干湿的水墨山水与留白;墨色为主,朱砂红印章点睛;远山、云雾、孤舟、松竹意象。",comp:"竖排标题配朱印;水墨晕染做分区;卷轴式横向时间线;折扇、圆窗形图片框。",type:"书法体或楷体标题,宋体正文。",mood:"写意、文人、悠远。",avoid:"高饱和色、几何硬边、西式图标。",kw:"chinese ink wash painting, xuan paper, misty mountains, red seal stamp, calligraphy, negative space"},
+{id:"guochao",zh:"新中式国潮",en:"Guochao",cat:"东方文化",c:["#B22222","#FFF3D6","#F2B632","#0F4C5C","#1A1A1A"],t:{g:"none",bw:.1,r:0,sh:"hard",tf:"serif",tw:900,deco:"cloud",tag:"box"},
+ look:"中国红、明黄、黛蓝、墨黑的高对比撞色;祥云、海水江崖、回纹、龙凤与瑞兽的扁平化重绘;粗线描边。",comp:"回纹边框;祥云角花;牌匾式标题;窗棂格分区;印章式编号。",type:"粗宋或厚重黑体,可配书法字。",mood:"国潮、喜庆、年轻化的传统。",avoid:"低饱和、西式极简、细弱字体。",kw:"guochao, chinese red and gold, auspicious clouds, fret pattern, bold outlines, modern traditional"},
+{id:"ukiyoe",zh:"浮世绘",en:"Ukiyo-e",cat:"东方文化",c:["#EADFC8","#1F2A44","#C0392B","#2F5D8A","#D9B26F"],t:{g:"grain",bw:.06,r:0,sh:"none",tf:"serif",tw:800,deco:"wave",tag:"seal"},
+ look:"和纸米色底,木版画的平涂色块与墨线;靛蓝、朱红、土黄;海浪、富士山、云纹、樱花。",comp:"浪花纹做页面底边;竖排题签框;云纹分隔;圆形家纹式图标。",type:"明朝体,标题竖排。",mood:"江户、版画、装饰性。",avoid:"渐变、3D、无衬线粗体。",kw:"ukiyo-e woodblock print, great wave, indigo and vermilion, flat colors with ink outlines, washi"},
+{id:"dunhuang",zh:"敦煌壁画",en:"Dunhuang Mural",cat:"东方文化",c:["#E9DCC3","#3B2A20","#B5523B","#2E7D7A","#D9A441"],t:{g:"grain",bw:.05,r:0,sh:"none",tf:"serif",tw:800,deco:"cloud",tag:"box"},
+ look:"土黄泥壁质感底,矿物颜料色:石青、石绿、朱砂、土红、金;飞天飘带、藻井、忍冬纹、莲花。",comp:"藻井图案做章节页;飘带曲线引导视线;纹样边框;斑驳肌理的色块。",type:"魏碑或厚重宋体。",mood:"丝路、古典、庄重而绚丽。",avoid:"荧光色、光滑质感、现代图标。",kw:"dunhuang mural, mineral pigments, turquoise and cinnabar, flying apsaras ribbons, caisson pattern, weathered texture"}
+];
+
+
+/* ---------- motion profiles ---------- */
+var MOTION={
+snap:{n:"硬切弹出",trans:"页与页之间硬切,不要淡入淡出;章节页可以用整块色块横向推入。",enter:"元素按阅读顺序逐个「啪」地弹出:从 40% 缩放直接跳到 100%,用 3–4 帧的阶梯缓动(steps),不要平滑过渡;卡片保留最终的微旋转角度。",emph:"强调用位移不用发光:被强调的卡片向左上跳 4px、硬阴影同步加长;贴纸标签可以轻微摇晃一次。",dur:"单个元素 0.2–0.3 秒,元素间隔 80–100 毫秒,整页入场不超过 1 秒。",ppt:"转场用「无」或「推入」;动画用「出现」「缩放」并把平滑结束设为 0。"},
+print:{n:"印刷感,几乎不动",trans:"全部硬切,像翻页。",enter:"不做入场动画,或只让整页内容在 0.1 秒内一次性出现;可以让第二种油墨的图层晚 120 毫秒套印上去,模拟错版。",emph:"不用动效强调,靠版面本身。",dur:"任何动画不超过 0.15 秒。",ppt:"转场用「无」或「页面卷曲」;不加元素动画。"},
+swiss:{n:"精确滑入",trans:"沿网格方向的整页平移(左右推入),方向全套统一。",enter:"文字块从左侧滑入 20–30px 同时淡入,严格按层级顺序:标题、正文、图表;图表柱从基线向上生长。",emph:"只用颜色切换到强调红,不缩放不抖动。",dur:"0.35–0.45 秒,缓动 cubic-bezier(.2,.8,.2,1),间隔 60–80 毫秒。",ppt:"转场用「推入」;动画用「擦除(自左侧)」「飞入」并缩短到 0.4 秒。"},
+fade:{n:"缓慢淡入",trans:"1 秒左右的交叉淡化,或先淡出到纯色再淡入下一页。",enter:"标题先淡入,停顿半拍,再淡入其余内容;不要位移、不要缩放。",emph:"重点文字亮度或不透明度缓慢提高,其他内容压暗到 40%。",dur:"单个元素 0.9–1.2 秒,间隔 300 毫秒,允许留白和停顿。",ppt:"转场用「淡出」并设为 1 秒;动画用「淡化」。"},
+glow:{n:"故障闪烁",trans:"故障切换:横向错位撕裂 2–3 帧加一次闪白,然后落定;或扫描线自上而下刷新。",enter:"元素以闪烁方式点亮:不透明度在 0、1、0.2、1 之间跳变,伴随 ±6px 横向抖动,用阶梯缓动;霓虹描边最后亮起并带一次光晕脉冲。",emph:"强调项光晕呼吸一次;数字用乱码滚动后定格。",dur:"单个元素 0.4–0.5 秒,间隔 100 毫秒;故障效果只在入场时出现一次,不要持续闪烁。",ppt:"转场用「故障」「闪光」或「随机线条」;动画用「闪烁一次」加「出现」。"},
+type:{n:"打字机",trans:"清屏硬切,像执行了 clear 命令。",enter:"标题逐字打出,光标在行尾闪烁;正文逐行出现,像日志输出;进度条从空填到满。",emph:"强调行反色显示(绿底黑字)。",dur:"打字每字 40–60 毫秒,行间隔 150 毫秒;光标闪烁周期 1 秒。",ppt:"转场用「无」;动画用「出现」并设置「按字母」延迟 0.05 秒。"},
+float:{n:"柔和上浮",trans:"平滑变形(Morph)或轻微缩放的交叉淡化,让同一元素在页间连续移动。",enter:"卡片从下方 16px 处上浮并从 95% 放大到 100%,带一点回弹;背景光斑持续极慢地漂移。",emph:"强调卡片轻微放大到 103% 并加深投影;悬停感,不要抖动。",dur:"0.6–0.8 秒,回弹缓动 cubic-bezier(.2,1.3,.3,1),间隔 100 毫秒。",ppt:"转场用「平滑」;动画用「浮入」「缩放」并勾选平滑结束。"},
+draw:{n:"手绘描线",trans:"擦除式转场,像板擦擦过或翻到下一张纸。",enter:"线条沿路径被「画」出来(描边动画),文字像被写出来一样自左向右显现;先画框再写字,最后画箭头。",emph:"荧光笔从左到右划过重点;或手画一个圈把重点圈起来。",dur:"每条线 0.6–0.9 秒,写字速度均匀,间隔 150–200 毫秒。",ppt:"转场用「擦除」;动画用「擦除(自左侧)」,线条和箭头按绘制顺序排。"},
+paper:{n:"纸片落下",trans:"新的一页像一张纸盖上来,或从侧面滑入并带轻微旋转。",enter:"纸片、照片、便签从上方落下,带 -8° 到 0° 的旋转并在落点轻微回弹;胶带和图钉最后「贴」上去。",emph:"被强调的纸片抬起(放大加深投影)再放下。",dur:"0.45–0.55 秒,回弹缓动,间隔 120–150 毫秒。",ppt:"转场用「剥离」或「页面卷曲」;动画用「飞入」加「陀螺旋」微调,或「弹跳」。"},
+ink:{n:"墨晕显现",trans:"水墨晕染转场:墨色从一点晕开铺满,再化出下一页;或卷轴横向展开。",enter:"文字和图形从模糊、浅淡逐渐凝实,像墨在宣纸上渗开;印章最后「盖」下,带一次轻微缩放。",emph:"不做强调动效,靠留白。",dur:"1.2–1.5 秒,缓入缓出,间隔 300 毫秒,整体要慢。",ppt:"转场用「淡出」或「涟漪」;动画用「淡化」加「缩放」,时长 1.2 秒以上。"},
+data:{n:"数据生长",trans:"快速淡化或不加转场,别打断阅读。",enter:"数字从 0 滚动计数到目标值;柱状图从基线生长,折线沿路径绘制,饼图顺时针扫出;文字只做 0.3 秒的轻微上移淡入。",emph:"需要讲解的那一根柱子或那一行保持原色,其余降到 30% 不透明度。",dur:"图表 0.6–0.8 秒,文字 0.3 秒,间隔 60 毫秒;同一页所有图表同时开始。",ppt:"转场用「淡出」0.3 秒;图表动画用「擦除(自底部)」并选「按系列」或「按类别」。"},
+retro:{n:"复古转场",trans:"圆形光圈展开(iris)、星形擦除、棋盘格或百叶窗,选一种全套统一。",enter:"标题弹跳或旋转入场一次,其余内容随转场一起出现,不再单独做动画。",emph:"星芒或徽章原地旋转一圈。",dur:"转场 0.8–1 秒,元素 0.5 秒。",ppt:"转场用「形状(圆形)」「棋盘」「百叶窗」;动画用「弹跳」「旋转」。"}};
+var MOMAP={neobrutal:"snap",memphis:"snap",street:"snap",comic:"snap",pixel:"snap",constructiv:"snap",riso:"print",collage:"paper",newspaper:"print",fieldguide:"print",swiss:"swiss",bauhaus:"swiss",mono:"fade",japanmin:"fade",midcentury:"retro",artdeco:"fade",psy70:"retro",citypop:"retro",vapor:"glow",y2k:"float",blueprint:"draw",cyber:"glow",terminal:"type",hud:"glow",glass:"float",aurora:"float",dashboard:"data",cleantech:"data",keynote:"fade",luxury:"fade",darkacademia:"fade",cinema:"fade",filmphoto:"paper",sketchnote:"draw",chalk:"draw",kraft:"paper",sticky:"paper",watercolor:"ink",consulting:"data",editorial:"swiss",academic:"data",flatcorp:"float",isometric:"float",clay:"float",neumorph:"float",morandi:"fade",kids:"paper",kawaii:"float",inkwash:"ink",guochao:"snap",ukiyoe:"ink",dunhuang:"ink"};
+function mo(s){return MOMAP[s.id]||"fade"}
+
+/* ---------- mini slide ---------- */
+var FONT={sans:"var(--sans)",serif:"var(--serif)",mono:"var(--mono)",round:"var(--round)",cond:"var(--cond)"};
+function lum(h){var n=parseInt(h.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;return(.299*r+.587*g+.114*b)/255}
+function on(h){return lum(h)>.6?"#111111":"#FFFFFF"}
+var KINDS=[['cover','封面'],['section','章节'],['data','数据'],['chart','图表'],['flow','流程'],['quote','引语']];
+function slideHTML(s,c,title,sub,kind,play){kind=kind||'data';var t=s.t,bg=c[0],ink=c[1],a1=c[2],a2=c[3],a3=c[4],dark=lum(bg)<.45,v={};
+ v.bg=t.grad&&c===s.c?t.grad:bg;v.ink2=ink;v.bw=(t.bw||0)+"em";v.bd=t.bw?(t.sh==="glow"||t.cfill==="none"&&dark?a1:ink):"transparent";if(s.id==="glass"||s.id==="blueprint"||s.id==="hud")v.bd=s.id==="glass"?"rgba(255,255,255,.45)":ink;
+ v.rad=(t.r||0)+"em";v.tf=FONT[t.tf]||FONT.sans;v.bf=t.tf==="mono"||t.tf==="round"?FONT[t.tf]:(t.tf==="serif"?FONT.serif:FONT.sans);v.nf=t.tf==="serif"?FONT.serif:(t.tf==="mono"?FONT.mono:v.tf);v.lf=t.tf==="mono"||s.cat==="科技未来"||s.id==="neobrutal"?FONT.mono:v.bf;
+ v.tw=t.tw||700;v.tt=t.up?"uppercase":"none";v.ls=t.up?".06em":"-.01em";
+ v.tsh=t.tsh==="riso"?".12em .1em 0 "+a1:t.tsh==="glow"?"0 0 .5em "+a1:t.tsh==="offset"?".1em .1em 0 "+a1:"none";
+ v.sh={hard:".3em .3em 0 "+(dark?a1:ink),soft:"0 .3em .9em rgba(0,0,0,.18)",glow:"0 0 .8em "+a1+"88",clay:".25em .35em .7em rgba(80,60,140,.25),inset -.15em -.2em .4em rgba(0,0,0,.08),inset .15em .2em .4em rgba(255,255,255,.7)",neu:".3em .3em .7em rgba(148,163,184,.55),-.3em -.3em .7em rgba(255,255,255,.95)",none:"none"}[t.sh||"none"];
+ var fill=t.cfill==="none"?["transparent","transparent","transparent"]:t.cfill==="ghost"?["rgba(255,255,255,.1)","rgba(255,255,255,.1)","rgba(255,255,255,.1)"]:t.glass?["rgba(255,255,255,.16)","rgba(255,255,255,.16)","rgba(255,255,255,.16)"]:t.cbg?[t.cbg,t.cbg,t.cbg]:(dark?[a1,a2,a3]:["#FFFFFF",a1,a2]);
+ if(s.id==="neobrutal")fill=["#FFFFFF",a1,a2];if(s.id==="sticky")fill=[a1,a2,a3];if(t.cfill==="ghost"&&!dark)fill=[a1+"55",a2+"55",a3+"55"];
+ var fg=function(f){return f==="transparent"||f.indexOf("rgba")===0?ink:(t.cfg||on(f))};
+ v.cbg=fill[0];v.c2bg=fill[1];v.c3bg=fill[2];v.cfg=fg(fill[0]);v.c2fg=fg(fill[1]);v.c3fg=fg(fill[2]);v.bf2=t.glass?"blur(6px)":"none";
+ var tg={"pill-dark":[ink,bg,"99em"],"pill":[a1,on(a1),"99em"],"pill-soft":[a1+"22",dark?ink:a1,"99em"],"pill-line":["transparent",ink,"99em"],"pill-neu":[bg,a1,"99em"],"box":[a1,on(a1),"0"],"box-line":["transparent",a1,"0"],"cut":["transparent",a1,"0"],"tape":[a3+"AA",on(a3),"0"],"seal":[a1,"#FFFFFF",".1em"],"burst":[a1,"#FFFFFF","0"],"hand":["transparent",a1,".4em"],"prompt":["transparent",a1,"0"],"underline":["transparent",a1,"0"]}[t.tag];
+ v.a1c=Math.abs(lum(a1)-lum(bg))<.22?ink:a1;v.b1=fill[0]==='#FFFFFF'||fill[0]==='transparent'&&!t.bw?a3:fill[0];v.tagbg=tg?tg[0]:"transparent";v.tagfg=tg?tg[1]:ink;v.tagr=tg?tg[2]:"0";v.gc=dark?"rgba(255,255,255,.14)":"rgba(0,0,0,.16)";if(s.id==="riso"||s.id==="street"||s.id==="comic")v.gc=a1+(s.id==="comic"?"66":"AA");if(s.id==="vapor"||s.id==="cyber"||s.id==="hud")v.gc=a2+"55";if(s.id==="artdeco"||s.id==="luxury")v.gc=a1;
+ var css=Object.keys(v).map(function(k){return"--"+k+":"+v[k]}).join(";");
+ var deco={blob:'<span class="deco" style="width:34%;aspect-ratio:1;border-radius:50%;right:-6%;top:-14%;background:'+a1+';opacity:.85;mix-blend-mode:multiply"></span><span class="deco" style="width:22%;aspect-ratio:1;border-radius:50%;right:16%;top:8%;background:'+a2+';opacity:.8;mix-blend-mode:multiply"></span>',
+  memphis:'<span class="deco" style="width:12%;aspect-ratio:1;border-radius:50%;right:6%;top:8%;background:'+a2+';border:.4cqw solid '+ink+'"></span><span class="deco" style="right:20%;top:14%;border:3cqw solid transparent;border-bottom:5cqw solid '+a3+'"></span><span class="deco" style="width:16%;height:2cqw;right:4%;top:36%;background:repeating-linear-gradient(90deg,'+ink+' 0 1.2cqw,transparent 1.2cqw 2.4cqw)"></span>',
+  bauhaus:'<span class="deco" style="width:26%;aspect-ratio:1;border-radius:50%;right:6%;top:8%;background:'+a1+'"></span><span class="deco" style="width:18%;aspect-ratio:1;right:22%;top:26%;background:'+a2+'"></span><span class="deco" style="right:2%;top:30%;border:6cqw solid transparent;border-bottom:10cqw solid '+a3+'"></span>',
+  diag:'<span class="deco" style="width:70%;height:60%;right:-30%;top:-20%;background:'+a1+';transform:rotate(-24deg)"></span>',
+  sun:'<span class="deco" style="width:30%;aspect-ratio:1;right:4%;top:4%;background:repeating-conic-gradient('+a3+' 0 10deg,transparent 10deg 20deg);border-radius:50%"></span>',
+  sun2:'<span class="deco" style="width:20%;aspect-ratio:1;border-radius:50%;right:6%;top:8%;background:'+a3+';border:.5cqw solid '+ink+'"></span>',
+  sunset:'<span class="deco" style="width:30%;aspect-ratio:1;border-radius:50%;right:10%;top:12%;background:linear-gradient('+a3+','+a1+');-webkit-mask-image:repeating-linear-gradient(0deg,#000 0 2.2cqw,transparent 2.2cqw 3cqw);mask-image:repeating-linear-gradient(0deg,#000 0 2.2cqw,transparent 2.2cqw 3cqw)"></span>',
+  waves:'<span class="deco" style="left:0;right:0;bottom:0;height:34%;background:repeating-radial-gradient(circle at 50% 160%,'+a1+' 0 3cqw,'+a2+' 3cqw 6cqw,'+a3+' 6cqw 9cqw);opacity:.9"></span>',
+  fan:'<span class="deco" style="width:36%;aspect-ratio:2/1;left:32%;bottom:-2%;border-radius:50cqw 50cqw 0 0;background:repeating-conic-gradient(from 270deg at 50% 100%,'+a1+' 0 4deg,transparent 4deg 10deg)"></span>',
+  orb:'<span class="deco" style="width:24%;aspect-ratio:1;border-radius:50%;right:6%;top:8%;background:radial-gradient(circle at 30% 30%,#fff,'+a1+' 45%,'+a2+')"></span>',
+  ring:'<span class="deco" style="width:28%;aspect-ratio:1;border-radius:50%;right:5%;top:8%;border:.3cqw solid '+a1+';outline:.2cqw dashed '+a1+';outline-offset:1.4cqw"></span>',
+  iso:'<span class="deco" style="width:18%;aspect-ratio:1;right:12%;top:12%;background:'+a1+';transform:rotateX(55deg) rotateZ(45deg);box-shadow:2cqw 2cqw 0 '+a2+'"></span>',
+  arch:'<span class="deco" style="width:20%;height:46%;right:8%;top:10%;border-radius:20cqw 20cqw 0 0;background:'+a2+'"></span><span class="deco" style="width:14%;aspect-ratio:1;border-radius:50%;right:24%;top:30%;background:'+a1+'"></span>',
+  wash:'<span class="deco" style="width:60%;height:70%;left:20%;top:0;border-radius:50%;background:radial-gradient('+a1+'88,transparent 65%);filter:blur(2cqw)"></span><span class="deco" style="width:40%;height:50%;right:0;top:20%;border-radius:50%;background:radial-gradient('+a2+'88,transparent 65%);filter:blur(2cqw)"></span>',
+  ink:'<span class="deco" style="left:30%;right:0;bottom:0;height:60%;background:radial-gradient(ellipse at 70% 100%,'+ink+'CC 0,'+ink+'55 30%,transparent 62%);filter:blur(1.2cqw)"></span>',
+  cloud:'<span class="deco" style="width:30%;height:14%;right:4%;top:8%;border-radius:99em;border:.5cqw solid '+a2+';box-shadow:-4cqw 3cqw 0 -1cqw '+a2+'"></span>',
+  wave:'<span class="deco" style="left:0;right:0;bottom:0;height:22%;background:radial-gradient(circle at 5cqw 0,transparent 4.2cqw,'+a2+' 4.3cqw 5cqw,transparent 5.1cqw) 0 0/10cqw 100%,'+a2+'33"></span>'}[t.deco]||"";
+ var bar=t.bar===1?'<span class="deco" style="left:0;top:0;bottom:0;width:1.6%;background:'+a1+'"></span>':t.bar===2?'<span class="deco" style="left:0;right:0;top:0;height:7%;background:'+a1+'"></span>':"";
+ var letter=t.letter?'<span class="deco" style="left:0;right:0;top:0;height:11%;background:#000"></span><span class="deco" style="left:0;right:0;bottom:0;height:11%;background:#000"></span>':"";
+ var tagTxt=t.tag==="none"||!t.tag?"":'<span class="tag" style="'+(t.tag==="underline"?"border:0;border-bottom:.12em solid "+a1+";padding-left:0;border-radius:0":"")+(t.tag==="cut"||t.tag==="box-line"||t.tag==="pill-line"||t.tag==="hand"?";border:.1em solid "+a1:"")+'">'+(t.tag==="prompt"?"$ ":t.tag==="seal"?"":"01 ")+(t.tag==="seal"?"壹":esc(s.en.split(" ")[0]))+'</span>';
+ var body;
+ if(kind==='cover')body=tagTxt+'<span class="ttl big">'+esc(title)+'</span>'+(sub?'<span class="sub">'+esc(sub)+'</span>':'')+'<span class="by">主讲人 · 2026</span>';
+ else if(kind==='section')body='<span class="secn">02</span><span class="ttl">'+esc(title)+'</span><span class="sub">这一章要回答的问题</span>';
+ else if(kind==='chart')body=tagTxt+'<span class="ttl" style="font-size:1.3em">一句话结论写在标题里</span><span class="bars">'+[38,55,47,76,96].map(function(h){return'<span class="bar" style="height:'+h+'%"></span>'}).join('')+'</span>';
+ else if(kind==='flow')body=tagTxt+'<span class="ttl" style="font-size:1.3em">三步流程</span><span class="flow"><span class="cd"><b>输入</b><i>第一步</i></span><span class="ln"></span><span class="cd"><b>处理</b><i>第二步</i></span><span class="ln"></span><span class="cd"><b>输出</b><i>第三步</i></span></span>';
+ else if(kind==='quote')body='<span class="qm">“</span><span class="qt">一页只讲一件事,讲完就翻页。</span><span class="by">某位演讲者</span>';
+ else body=tagTxt+'<span class="ttl">'+esc(title)+'</span>'+(sub?'<span class="sub">'+esc(sub)+'</span>':'')+'<span class="row"><span class="cd"><b>7.1s</b><i>关键指标</i></span><span class="cd"><b>101</b><i>次调用</i></span><span class="cd"><b>+38%</b><i>同比</i></span></span>';
+ return'<span class="slide'+(t.align==="center"||kind==='quote'?" center":"")+(t.rot?" rot":"")+(t.letter?" lb":"")+(play?" play m-"+mo(s):"")+'" style="'+css+'">'+(t.g&&t.g!=="none"?'<span class="g '+t.g+'"></span>':"")+(kind==='chart'||kind==='flow'?'':deco)+bar+letter+'<span class="in">'+body+'</span></span>'}
+function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* ---------- state ---------- */
+var $=function(i){return document.getElementById(i)},cur=STYLES[0],pal=cur.c.slice(),cat="全部",fav={},kind='cover';
+try{fav=JSON.parse(localStorage.getItem("ppt_fav")||"{}")}catch(e){}
+function saveFav(){try{localStorage.setItem("ppt_fav",JSON.stringify(fav))}catch(e){}}
+
+function renderChips(){$("chips").innerHTML=CATS.map(function(c){var n=c==="全部"?STYLES.length:c==="收藏"?Object.keys(fav).length:STYLES.filter(function(s){return s.cat===c}).length;return'<button class="chip" aria-pressed="'+(c===cat)+'" data-c="'+c+'">'+c+" "+n+"</button>"}).join("");
+ [].forEach.call($("chips").children,function(b){b.onclick=function(){cat=b.dataset.c;renderChips();renderGal()}})}
+function renderGal(){var q=$("q").value.trim().toLowerCase(),list=STYLES.filter(function(s){if(cat==="收藏"&&!fav[s.id])return false;if(cat!=="全部"&&cat!=="收藏"&&s.cat!==cat)return false;if(!q)return true;return(s.zh+s.en+s.cat+s.kw+s.mood+s.look).toLowerCase().indexOf(q)>-1});
+ $("gal").innerHTML=list.length?list.map(function(s){return'<div style="position:relative"><button class="sc" aria-pressed="'+(s.id===cur.id)+'" data-id="'+s.id+'">'+slideHTML(s,s.c,s.zh,"")+'<span class="nm">'+s.zh+'</span><span class="en">'+s.en+'</span></button><button class="star" aria-pressed="'+!!fav[s.id]+'" aria-label="收藏 '+s.zh+'" data-f="'+s.id+'">'+(fav[s.id]?"★":"☆")+"</button></div>"}).join(""):'<p class="empty">'+(cat==="收藏"?"还没有收藏。点风格卡片右下角的星星。":"没有匹配的风格,换个词试试。")+"</p>";
+ [].forEach.call($("gal").querySelectorAll(".sc"),function(b){b.onclick=function(){pick(b.dataset.id)}});
+ [].forEach.call($("gal").querySelectorAll(".star"),function(b){b.onclick=function(){var id=b.dataset.f;if(fav[id])delete fav[id];else fav[id]=1;saveFav();renderChips();renderGal()}})}
+function pick(id){cur=STYLES.filter(function(s){return s.id===id})[0]||STYLES[0];pal=cur.c.slice();try{history.replaceState(null,"","#"+cur.id)}catch(e){}renderGal();renderSide()}
+function drawPrev(play){var topic=$("fTopic").value.trim()||cur.zh;$("preview").innerHTML=slideHTML(cur,pal,topic,cur.mood,kind,play);
+ $("kinds").innerHTML=KINDS.map(function(k){return'<div><button aria-pressed="'+(k[0]===kind)+'" data-k="'+k[0]+'" aria-label="范例:'+k[1]+'">'+slideHTML(cur,pal,topic,'',k[0])+'</button><span class="lb2">'+k[1]+'</span></div>'}).join('');
+ [].forEach.call($("kinds").querySelectorAll('button'),function(b){b.onclick=function(){kind=b.dataset.k;drawPrev(true)}});$("moName").textContent='动效:'+MOTION[mo(cur)].n}
+function renderSide(){drawPrev(true);$("curZh").textContent=cur.zh;$("curEn").textContent=cur.en+" · "+cur.cat;$("curDesc").textContent=cur.mood;
+ $("pal").innerHTML=pal.map(function(h,i){return'<input type="color" value="'+h+'" data-i="'+i+'" aria-label="'+["背景色","文字色","主色","辅色","点缀色"][i]+'">'}).join("")+'<button class="lnk" id="palReset">恢复原配色</button>';
+ [].forEach.call($("pal").querySelectorAll("input"),function(inp){inp.oninput=function(){pal[+inp.dataset.i]=inp.value.toUpperCase();drawPrev(false);build()}});
+ $("palReset").onclick=function(){pal=cur.c.slice();renderSide()};build()}
+
+/* ---------- prompt ---------- */
+function build(){var s=cur,topic=$("fTopic").value.trim()||"【你的主题】",pages=$("fPages").value||12,ratio=$("fRatio").value,aud=$("fAud").value.trim(),outline=$("fOutline").value.trim(),tool=$("fTool").value,L=[];
+ var names=["背景","文字","主色","辅色","点缀"],palTxt=pal.map(function(h,i){return names[i]+" "+h}).join("、"),changed=pal.join()!==s.c.join();
+ if(tool==="image"){L.push("我要用图像模型逐页生成一套演示文稿的画面,主题是「"+topic+"」,共 "+pages+" 页,比例 "+ratio+(aud?",受众是"+aud:"")+"。");L.push("请先根据下面的风格规范,为每一页分别写一条独立的出图提示词(中文描述加一行英文关键词),每条都要重复完整的风格描述,保证各页风格一致;页面上的文字内容尽量少,并明确写出要出现的文字。")}
+ else L.push("请为我制作一套 "+ratio+" 的演示文稿,主题是「"+topic+"」,共 "+pages+" 页"+(aud?",受众是"+aud:"")+"。");
+ L.push(outline?"内容要点如下:\n"+outline:"内容要点:【在这里粘贴大纲或素材;留空则请你先拟一份大纲给我确认】");
+ L.push("");L.push("【整体视觉风格:"+s.zh+" / "+s.en+"】");L.push("- "+s.look);L.push("- 配色"+(changed?"(已自定义)":"")+"只用这一组:"+palTxt+"。大面积用背景色与主色,点缀色只用于强调。");L.push("- 气质:"+s.mood);
+ if($("oComp").checked){L.push("");L.push("【版式组件】");s.comp.split(";").forEach(function(x,i){L.push((i+1)+". "+x.replace(/。$/,"")+"。")})}
+ L.push("");L.push("【字体】");L.push("- "+s.type);L.push("- 字号层级要拉开:标题、数字明显大于说明文字;全套只用一到两个字体家族。");
+ L.push("");L.push("【页面类型】全套至少包含这几种版式,同类页面版式保持一致:");L.push("1. 封面:主题大标题、一行副标题、署名与日期,是全套视觉最强的一页。");L.push("2. 章节页:大号章节编号加章节标题,可以换用主色做整页背景。");L.push("3. 数据页:两到三个大数字卡,每个数字配一行说明。");L.push("4. 图表页:标题直接写结论,一张图表只讲一个对比,强调色只给要讲的那一项。");L.push("5. 流程或结构页:三到五个节点加连接线,节点内文字不超过八个字。");L.push("6. 引语或金句页:一句话居中或大字左对齐,留白最多。");L.push("7. 结尾页:一句总结加下一步行动,不要只写「谢谢」。");
+ var mv=$("fMotion").value,M=MOTION[mo(s)];
+ if(tool!=="image"){L.push("");if(mv==="none"){L.push("【动效与转场】");L.push("- 不要任何动画和转场,全部硬切,保证导出 PDF 后与放映效果一致。")}
+  else{L.push("【动效与转场:"+M.n+(mv==="rich"?",丰富":",克制")+"】");L.push("- 转场:"+M.trans+"全套只用这一种转场。");L.push("- 元素入场:"+M.enter);if(mv==="rich")L.push("- 强调:"+M.emph);L.push("- 节奏:"+M.dur);
+   L.push(mv==="rich"?"- 每页一个编排好的入场序列,顺序跟阅读顺序一致;图表要有生长或绘制动画;讲解中的强调动效由点击触发。":"- 每页只做一组入场,不加循环动画、不加强调动画;图表可以有一次生长动画。");
+   L.push("- 同类元素永远用同一种动效;动效服务于讲述顺序,不为了热闹。");
+   if(tool==="html")L.push("- 用 CSS 动画实现,翻到该页时触发;用 @media (prefers-reduced-motion: reduce) 关闭全部动画;关闭后页面必须完整可读。");
+   else L.push("- 在 PowerPoint / Keynote 里对应:"+M.ppt)}}
+ if($("oAvoid").checked){L.push("");L.push("【不要出现】");L.push("- "+s.avoid)}
+ if($("oRule").checked){L.push("");L.push("【内容原则】");L.push("- 每页只讲一个观点:一个标题、一个主视觉(图、图表或大数字),文字尽量少。");L.push("- 多用具体数字、真实案例和示意图,少用要点列表和图标堆砌。");L.push("- 封面、章节页、内容页、结尾页的版式要有变化,但配色、字体、组件保持一致。")}
+ if($("oKw").checked){L.push("");L.push("【英文风格关键词】");L.push(s.kw)}
+ L.push("");L.push("【输出要求】");
+ if(tool==="html"){L.push("- 输出一个自包含的 HTML 单文件幻灯片:画布固定 1600×900,按窗口等比缩放居中;方向键、空格和点击翻页,触屏支持左右滑动;底部显示页码。");L.push("- CSS 与 JS 全部内联;字体给出系统字体回退;图形用内联 SVG 或 CSS 绘制,不引用外部图片。");L.push("- 配色写成 CSS 变量,组件写成可复用的 class。")}
+ else if(tool==="ppt"){L.push("- 先把上面的风格设成整套主题(主题色、字体、背景),再逐页生成。");L.push("- 逐页给出:页标题、版式类型、正文要点(每页不超过 40 字)、配图或图表建议。")}
+ else if(tool==="image"){L.push("- 每页一条提示词,格式:第 N 页|画面描述(含要出现的文字)|英文关键词,结尾加 --ar "+ratio.replace(/[^0-9:]/g,"")+"。");L.push("- 所有页面共用同一段风格描述,只替换画面内容。")}
+ else{L.push("- 直接生成完整的演示文稿;如果你能生成文件,就输出文件,否则逐页给出版式与内容。");L.push("- 动手之前先用三五句话复述你理解的风格,我确认后再继续。")}
+ $("out").value=L.join("\n")}
+
+/* ---------- events ---------- */
+["fTopic","fPages","fRatio","fAud","fOutline","fTool","fMotion","oComp","oRule","oKw","oAvoid"].forEach(function(id){$(id).addEventListener("input",function(){if(id==="fTopic")drawPrev(false);build()})});
+$("q").addEventListener("input",renderGal);
+$("replay").onclick=function(){drawPrev(true)};
+$("rand").onclick=function(){var s=STYLES[Math.floor(Math.random()*STYLES.length)];cat="全部";$("q").value="";renderChips();pick(s.id)};
+function toast(t){$("toast").textContent=t;setTimeout(function(){$("toast").textContent=""},1800)}
+$("copy").onclick=function(){var ta=$("out");var done=function(){toast("已复制")};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){ta.select();document.execCommand("copy");done()})}else{ta.select();document.execCommand("copy");done()}};
+$("dl").onclick=function(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([$("out").value],{type:"text/plain;charset=utf-8"}));a.download="ppt-prompt-"+cur.id+".txt";document.body.appendChild(a);a.click();a.remove();toast("已下载")};
+renderChips();pick((location.hash||"").slice(1)||STYLES[0].id);
+</script>
+</body>
+</html>
