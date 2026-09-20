@@ -9,7 +9,7 @@
 - 每种风格有六页范例:封面、章节、数据、图表、流程、引语,点小图切换大图,方向键也能切上一页/下一页;点「全屏看」放大到整屏,方向键切页、空格重播动效、Esc 退出
 - 每种风格配了一套动效方案(硬切弹出、精确滑入、缓慢淡入、故障闪烁、打字机、柔和上浮、手绘描线、纸片落下、墨晕显现、数据生长、复古转场、印刷感共 12 种),预览里能直接播放;提示词里写明转场、入场、强调、时长缓动,以及在 PowerPoint / Keynote 里对应的动画名
 - 可以改五个配色,改完提示词里的色值同步更新
-- 提示词里已经写好版式组件、字体、七种页面类型、动效与转场、禁止项、内容原则和英文关键词;结尾还交代了要输出 HTML 单文件幻灯片、或用图像模型逐页出图时分别该怎么做
+- 提示词只管视觉:整体风格、配色、版式组件、字体、七种页面类型、动效与转场、英文关键词;内容怎么写不做规定,交给你自己贴的大纲。结尾交代了要输出 HTML 单文件幻灯片、或用图像模型逐页出图时分别该怎么做
 - 搜索、分类筛选、收藏(存在浏览器本地)、随机、复制、下载 .txt
 - 单个 `index.html`,不依赖任何外部资源,断网也能用;链接带 `#风格id` 可以直接分享某个风格
 
@@ -44,7 +44,7 @@ git push -u origin main
  c:["#背景","#文字","#主色","#辅色","#点缀"],
  t:{g:"dots", bw:.1, r:.4, sh:"hard", tf:"sans", tw:800, tag:"pill"},
  look:"背景与整体视觉。", comp:"组件一;组件二;组件三", type:"字体与排版。",
- mood:"气质。", avoid:"不要出现的东西。", kw:"english, style, keywords"}
+ mood:"气质。", avoid:"不要出现的东西(保留字段,目前不进提示词)。", kw:"english, style, keywords"}
 ```
 
-`t` 只影响缩略图:`g` 底纹(dots / lines / scan / rule / half / frame / frame2 / persp / grain / none),`bw` 描边粗细,`r` 圆角,`sh` 阴影(hard / soft / glow / clay / neu / none),`tf` 标题字体(sans / serif / mono / round / cond),`tag` 标签样式,`rot` 卡片微旋转,`deco` 装饰图形,`grad` 自定义背景渐变。进入提示词的是 `look`、`comp`、`type`、`mood`、`avoid`、`kw` 和配色。动效在 `MOMAP` 里给新风格的 id 指定一个方案名(snap / print / swiss / fade / glow / type / float / draw / paper / ink / data / retro),不指定则用 fade。`comp` 用分号分隔,会被拆成编号列表。适合场景写在 `USE` 里,键是风格 id。
+`t` 只影响缩略图:`g` 底纹(dots / lines / scan / rule / half / frame / frame2 / persp / grain / none),`bw` 描边粗细,`r` 圆角,`sh` 阴影(hard / soft / glow / clay / neu / none),`tf` 标题字体(sans / serif / mono / round / cond),`tag` 标签样式,`rot` 卡片微旋转,`deco` 装饰图形,`grad` 自定义背景渐变。进入提示词的是 `look`、`comp`、`type`、`mood`、`kw` 和配色。动效在 `MOMAP` 里给新风格的 id 指定一个方案名(snap / print / swiss / fade / glow / type / float / draw / paper / ink / data / retro),不指定则用 fade。`comp` 用分号分隔,会被拆成编号列表。适合场景写在 `USE` 里,键是风格 id。
