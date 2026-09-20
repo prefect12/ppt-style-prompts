@@ -1,5 +1,7 @@
 # PPT 风格提示词生成器
 
+在线访问:https://prefect12.github.io/ppt-style-prompts/
+
 挑一个视觉风格,填上主题,生成一段可以直接丢给 AI(Claude、ChatGPT、Kimi、Gamma、Midjourney 等)的 PPT 提示词。
 
 - 52 种风格,分 10 类:粗野拼贴、极简瑞士、复古、科技未来、纸感手作、商务咨询、东方文化、柔和可爱、暗色戏剧、插画图形
