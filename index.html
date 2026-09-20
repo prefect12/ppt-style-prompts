@@ -328,8 +328,9 @@ var FONT={sans:"var(--sans)",serif:"var(--serif)",mono:"var(--mono)",round:"var(
 function lum(h){var n=parseInt(h.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;return(.299*r+.587*g+.114*b)/255}
 function on(h){return lum(h)>.6?"#111111":"#FFFFFF"}
 var KINDS=[['cover','封面'],['section','章节'],['data','数据'],['chart','图表'],['flow','流程'],['quote','引语']];
+function repaint(g,orig,now){for(var i=0;i<orig.length;i++){if(now[i]&&now[i].toUpperCase()!==orig[i].toUpperCase())g=g.replace(new RegExp(orig[i],"gi"),now[i])}return g}
 function slideHTML(s,c,title,sub,kind,play){kind=kind||'data';var t=s.t,bg=c[0],ink=c[1],a1=c[2],a2=c[3],a3=c[4],dark=lum(bg)<.45,v={};
- v.bg=t.grad&&c===s.c?t.grad:bg;v.ink2=ink;v.bw=(t.bw||0)+"em";v.bd=t.bw?(t.sh==="glow"||t.cfill==="none"&&dark?a1:ink):"transparent";if(s.id==="glass"||s.id==="blueprint"||s.id==="hud")v.bd=s.id==="glass"?"rgba(255,255,255,.45)":ink;
+ v.bg=t.grad?repaint(t.grad,s.c,c):bg;v.ink2=ink;v.bw=(t.bw||0)+"em";v.bd=t.bw?(t.sh==="glow"||t.cfill==="none"&&dark?a1:ink):"transparent";if(s.id==="glass"||s.id==="blueprint"||s.id==="hud")v.bd=s.id==="glass"?"rgba(255,255,255,.45)":ink;
  v.rad=(t.r||0)+"em";v.tf=FONT[t.tf]||FONT.sans;v.bf=t.tf==="mono"||t.tf==="round"?FONT[t.tf]:(t.tf==="serif"?FONT.serif:FONT.sans);v.nf=t.tf==="serif"?FONT.serif:(t.tf==="mono"?FONT.mono:v.tf);v.lf=t.tf==="mono"||s.cat==="科技未来"||s.id==="neobrutal"?FONT.mono:v.bf;
  v.tw=t.tw||700;v.tt=t.up?"uppercase":"none";v.ls=t.up?".06em":"-.01em";
  v.tsh=t.tsh==="riso"?".12em .1em 0 "+a1:t.tsh==="glow"?"0 0 .5em "+a1:t.tsh==="offset"?".1em .1em 0 "+a1:"none";
