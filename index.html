@@ -27,7 +27,8 @@ h1{font-size:clamp(1.7rem,3.4vw,2.6rem);font-weight:900;letter-spacing:-.01em;li
 .chip{padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:transparent;cursor:pointer;font-size:.88rem}
 .chip[aria-pressed=true]{background:var(--ink);color:var(--page);border-color:var(--ink)}
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-.sc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:left;position:relative;display:block;width:100%}
+.gw{position:relative;display:flex}
+.sc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:left;position:relative;display:block;width:100%;flex:1 1 auto}
 .sc[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
 .sc .nm{display:block;font-weight:700;font-size:.92rem;margin-top:7px;line-height:1.3;padding-right:24px}
 .sc .en{display:block;color:var(--mute);font-size:.78rem;padding-right:26px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -131,7 +132,9 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--mute);font
 .play :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-fill-mode:backwards}
 .play :is(.sub,.by,.cd:nth-child(1),.bar:nth-child(1)){animation-delay:calc(var(--stg)*1)}.play :is(.cd:nth-child(3),.bar:nth-child(2),.ln){animation-delay:calc(var(--stg)*2)}
 .play :is(.cd:nth-child(5),.cd:nth-child(2):not(.flow *),.bar:nth-child(3)){animation-delay:calc(var(--stg)*3)}.play :is(.cd:nth-child(3):not(.flow *),.bar:nth-child(4)){animation-delay:calc(var(--stg)*4)}.play .bar:nth-child(5){animation-delay:calc(var(--stg)*5)}
-.play.m-snap :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mSnapS,mSnapO;animation-duration:.2s;animation-timing-function:steps(4,jump-start),steps(1,jump-start)}.m-snap{--stg:.08s}
+.play.m-snap :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mSnapS,mSnapO;animation-duration:.26s;animation-timing-function:cubic-bezier(.2,1.5,.35,1),steps(1,jump-start)}
+.play.m-snap .bar{animation-name:mGrow;animation-duration:.3s;animation-timing-function:cubic-bezier(.2,1.3,.35,1)}
+.m-snap{--stg:.07s}
 .play.m-print :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mFade;animation-duration:.08s}.m-print{--stg:.12s}
 .play.m-swiss :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln){animation-name:mSlide;animation-duration:.4s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}.m-swiss{--stg:.07s}
 .play.m-fade :is(.tag,.ttl,.sub,.by,.secn,.qm,.qt,.cd,.ln,.bar){animation-name:mFade;animation-duration:1.1s}.m-fade{--stg:.3s}
@@ -303,7 +306,7 @@ var STYLES=[
 
 /* ---------- motion profiles ---------- */
 var MOTION={
-snap:{n:"硬切弹出",trans:"页与页之间硬切,不要淡入淡出;章节页可以用整块色块横向推入。",enter:"元素按阅读顺序逐个「啪」地弹出:从 40% 缩放直接跳到 100%,用 3–4 帧的阶梯缓动(steps),不要平滑过渡;卡片保留最终的微旋转角度。",emph:"强调用位移不用发光:被强调的卡片向左上跳 4px、硬阴影同步加长;贴纸标签可以轻微摇晃一次。",dur:"单个元素 0.2–0.3 秒,元素间隔 80–100 毫秒,整页入场不超过 1 秒。",ppt:"转场用「无」或「推入」;动画用「出现」「缩放」并把平滑结束设为 0。"},
+snap:{n:"硬切弹出",trans:"页与页之间硬切,不要淡入淡出;章节页可以用整块色块横向推入。",enter:"元素按阅读顺序逐个「啪」地弹出:不要淡入,直接以 46% 缩放出现再快速弹到 100%,末端带一点回弹过冲;柱状图的柱子从基线向上长出;卡片保留最终的微旋转角度。",emph:"强调用位移不用发光:被强调的卡片向左上跳 4px、硬阴影同步加长;贴纸标签可以轻微摇晃一次。",dur:"单个元素 0.2–0.3 秒,元素间隔 80–100 毫秒,整页入场不超过 1 秒。",ppt:"转场用「无」或「推入」;动画用「缩放」或「弹跳」,平滑开始设为 0。"},
 print:{n:"印刷感,几乎不动",trans:"全部硬切,像翻页。",enter:"不做入场动画,或只让整页内容在 0.1 秒内一次性出现;可以让第二种油墨的图层晚 120 毫秒套印上去,模拟错版。",emph:"不用动效强调,靠版面本身。",dur:"任何动画不超过 0.15 秒。",ppt:"转场用「无」或「页面卷曲」;不加元素动画。"},
 swiss:{n:"精确滑入",trans:"沿网格方向的整页平移(左右推入),方向全套统一。",enter:"文字块从左侧滑入 20–30px 同时淡入,严格按层级顺序:标题、正文、图表;图表柱从基线向上生长。",emph:"只用颜色切换到强调红,不缩放不抖动。",dur:"0.35–0.45 秒,缓动 cubic-bezier(.2,.8,.2,1),间隔 60–80 毫秒。",ppt:"转场用「推入」;动画用「擦除(自左侧)」「飞入」并缩短到 0.4 秒。"},
 fade:{n:"缓慢淡入",trans:"1 秒左右的交叉淡化,或先淡出到纯色再淡入下一页。",enter:"标题先淡入,停顿半拍,再淡入其余内容;不要位移、不要缩放。",emph:"重点文字亮度或不透明度缓慢提高,其他内容压暗到 40%。",dur:"单个元素 0.9–1.2 秒,间隔 300 毫秒,允许留白和停顿。",ppt:"转场用「淡出」并设为 1 秒;动画用「淡化」。"},
@@ -376,7 +379,7 @@ function saveFav(){try{localStorage.setItem("ppt_fav",JSON.stringify(fav))}catch
 function renderChips(){$("chips").innerHTML=CATS.map(function(c){var n=c==="全部"?STYLES.length:c==="收藏"?Object.keys(fav).length:STYLES.filter(function(s){return s.cat===c}).length;return'<button class="chip" aria-pressed="'+(c===cat)+'" data-c="'+c+'">'+c+" "+n+"</button>"}).join("");
  [].forEach.call($("chips").children,function(b){b.onclick=function(){cat=b.dataset.c;renderChips();renderGal()}})}
 function renderGal(){var q=$("q").value.trim().toLowerCase(),list=STYLES.filter(function(s){if(cat==="收藏"&&!fav[s.id])return false;if(cat!=="全部"&&cat!=="收藏"&&s.cat!==cat)return false;if(!q)return true;return(s.zh+s.en+s.cat+s.kw+s.mood+s.look+uses(s)).toLowerCase().indexOf(q)>-1});
- $("gal").innerHTML=list.length?list.map(function(s){return'<div style="position:relative"><button class="sc" aria-pressed="'+(s.id===cur.id)+'" data-id="'+s.id+'">'+slideHTML(s,s.c,s.zh,"")+'<span class="nm">'+s.zh+'</span><span class="en">'+s.en+'</span></button><button class="star" aria-pressed="'+!!fav[s.id]+'" aria-label="收藏 '+s.zh+'" data-f="'+s.id+'">'+(fav[s.id]?"★":"☆")+"</button></div>"}).join(""):'<p class="empty">'+(cat==="收藏"?"还没有收藏。点风格卡片右下角的星星。":"没有匹配的风格,换个词试试。")+"</p>";
+ $("gal").innerHTML=list.length?list.map(function(s){return'<div class="gw"><button class="sc" aria-pressed="'+(s.id===cur.id)+'" data-id="'+s.id+'">'+slideHTML(s,s.c,s.zh,"")+'<span class="nm">'+s.zh+'</span><span class="en">'+s.en+'</span></button><button class="star" aria-pressed="'+!!fav[s.id]+'" aria-label="收藏 '+s.zh+'" data-f="'+s.id+'">'+(fav[s.id]?"★":"☆")+"</button></div>"}).join(""):'<p class="empty">'+(cat==="收藏"?"还没有收藏。点风格卡片右下角的星星。":"没有匹配的风格,换个词试试。")+"</p>";
  [].forEach.call($("gal").querySelectorAll(".sc"),function(b){b.onclick=function(){pick(b.dataset.id)}});
  [].forEach.call($("gal").querySelectorAll(".star"),function(b){b.onclick=function(){var id=b.dataset.f;if(fav[id])delete fav[id];else fav[id]=1;saveFav();renderChips();renderGal()}})}
 function pick(id){cur=STYLES.filter(function(s){return s.id===id})[0]||STYLES[0];pal=cur.c.slice();try{history.replaceState(null,"","#"+cur.id)}catch(e){}renderGal();renderSide()}
