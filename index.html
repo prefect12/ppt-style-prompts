@@ -30,8 +30,8 @@ h1{font-size:clamp(1.7rem,3.4vw,2.6rem);font-weight:900;letter-spacing:-.01em;li
 .sc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:left;position:relative;display:block;width:100%}
 .sc[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
 .sc .nm{display:block;font-weight:700;font-size:.92rem;margin-top:7px;line-height:1.3;padding-right:24px}
-.sc .en{display:block;color:var(--mute);font-size:.78rem}
-.star{position:absolute;right:6px;bottom:8px;border:0;background:transparent;cursor:pointer;font-size:1.1rem;line-height:1;padding:4px;color:var(--mute)}
+.sc .en{display:block;color:var(--mute);font-size:.78rem;padding-right:26px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.star{position:absolute;right:4px;bottom:4px;border:0;background:transparent;cursor:pointer;font-size:1.05rem;line-height:1;padding:4px;color:var(--mute)}
 .star[aria-pressed=true]{color:#E0A100}
 .empty{color:var(--mute);padding:30px 0}
 .side{position:sticky;top:14px;display:flex;flex-direction:column;gap:16px;max-height:calc(100vh - 28px);overflow-y:auto;padding-right:2px}
@@ -158,7 +158,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 24px 40px;color:var(--mute);font
       <div class="cur"><b id="curZh"></b><span id="curEn"></span></div><p class="desc" id="curDesc"></p>
       <p class="use" id="curUse"></p>
       <div class="pal" id="pal" aria-label="调整配色"></div>
-      <div class="acts" style="margin-top:8px"><button class="btn ghost" id="full" style="padding:5px 12px;font-size:.85rem">⤢ 全屏看</button><button class="btn ghost" id="replay" style="padding:5px 12px;font-size:.85rem">重播动效</button><span class="desc" id="moName" style="margin:0;align-self:center"></span></div>
+      <div class="acts" style="margin-top:8px"><button class="btn ghost" id="full" style="padding:5px 12px;font-size:.85rem">⤢ 全屏看</button><button class="btn ghost" id="replay" style="padding:5px 12px;font-size:.85rem">重播动效</button><span class="desc" id="moName" style="margin:0;align-self:center"></span><span class="desc" style="margin:0;align-self:center">← → 切换范例页</span></div>
     </div>
     <div class="box"><h2>提示词</h2><p class="hint">复制下面这段,粘到 AI 对话里,再把你要做的主题和素材接在后面就行。</p><textarea id="out" aria-label="生成的提示词" spellcheck="false"></textarea>
       <div class="acts"><button class="btn" id="copy">复制提示词</button><button class="btn ghost" id="dl">下载 .txt</button><span id="toast" role="status"></span></div>
@@ -396,15 +396,24 @@ function drawFull(play){$("fsPrev").innerHTML=slideHTML(cur,pal,cur.zh,cur.mood,
  [].forEach.call($("fsKinds").children,function(b){b.onclick=function(){kind=b.dataset.k;drawFull(true);drawPrev(false)}})}
 function openFull(){$("fs").hidden=false;document.body.style.overflow="hidden";drawFull(true);$("fsClose").focus()}
 function closeFull(){$("fs").hidden=true;document.body.style.overflow="";$("full").focus()}
-function stepKind(d){var i=0;KINDS.forEach(function(k,n){if(k[0]===kind)i=n});kind=KINDS[(i+d+KINDS.length)%KINDS.length][0];drawFull(true);drawPrev(false)}
+function stepKind(d){var i=0;KINDS.forEach(function(k,n){if(k[0]===kind)i=n});kind=KINDS[(i+d+KINDS.length)%KINDS.length][0];
+ if($("fs").hidden)drawPrev(true);else{drawFull(true);drawPrev(false)}}
 $("full").onclick=openFull;$("fsClose").onclick=closeFull;$("fsReplay").onclick=function(){drawFull(true)};
 $("fs").onclick=function(e){if(e.target===$("fs")||e.target.className==="fsstage")closeFull()};
-document.addEventListener("keydown",function(e){if($("fs").hidden)return;
- if(e.key==="Escape")closeFull();
- else if(e.key==="ArrowRight")stepKind(1);
+function typing(t){if(!t)return false;var n=t.tagName;return n==="INPUT"||n==="TEXTAREA"||n==="SELECT"||t.isContentEditable}
+document.addEventListener("keydown",function(e){
+ if(e.metaKey||e.ctrlKey||e.altKey)return;
+ if(!$("fs").hidden){
+  if(e.key==="Escape")closeFull();
+  else if(e.key==="ArrowRight")stepKind(1);
+  else if(e.key==="ArrowLeft")stepKind(-1);
+  else if(e.key===" "){e.preventDefault();drawFull(true)}else return;
+  e.stopPropagation();return}
+ if(typing(e.target))return;
+ if(e.key==="ArrowRight")stepKind(1);
  else if(e.key==="ArrowLeft")stepKind(-1);
- else if(e.key===" "){e.preventDefault();drawFull(true)}else return;
- e.stopPropagation()});
+ else return;
+ e.preventDefault()});
 
 /* ---------- prompt ---------- */
 function build(){var s=cur,L=[],M=MOTION[mo(s)];
